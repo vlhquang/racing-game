@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <meta name="description" content="Multiplayer Racing Webgame - Đua xe nhiều người chơi">
   <title>🏎️ Racing Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <!-- LOBBY SCREEN -->
   <div id="lobby-screen" class="screen active">
@@ -20,7 +24,8 @@
         <input type="text" id="player-name" placeholder="Nhập tên của bạn..." maxlength="12" class="input-field">
         <button id="btn-create" class="btn btn-primary">🏁 Tạo Phòng</button>
         <div class="divider"><span>hoặc</span></div>
-        <input type="text" id="room-code-input" placeholder="Nhập mã phòng..." maxlength="4" class="input-field" style="text-transform:uppercase">
+        <input type="text" id="room-code-input" placeholder="Nhập mã phòng..." maxlength="4" class="input-field"
+          style="text-transform:uppercase">
         <button id="btn-join" class="btn btn-secondary">🚀 Tham Gia</button>
       </div>
 
@@ -50,7 +55,10 @@
     <!-- Question overlay -->
     <div id="question-overlay" class="overlay hidden">
       <div class="question-box">
-        <div class="question-timer-bar"><div id="question-timer-fill" class="timer-fill"></div></div>
+        <div class="question-timer-bar">
+          <div id="question-timer-fill" class="timer-fill"></div>
+        </div>
+        <div id="question-timer-text" class="question-timer-text"></div>
         <h2 id="question-text" class="question-title">Câu hỏi?</h2>
         <div id="question-answers" class="answer-grid"></div>
       </div>
@@ -91,4 +99,5 @@
   <script src="js/renderer.js"></script>
   <script src="js/main.js"></script>
 </body>
+
 </html>

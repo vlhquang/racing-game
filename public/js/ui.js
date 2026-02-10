@@ -5,6 +5,7 @@ const UI = (() => {
     let currentRoomCode = '';
     let isHost = false;
     let myPlayerId = '';
+    let questionTimerInterval = null;
 
     function init() {
         // DOM elements
@@ -165,10 +166,24 @@ const UI = (() => {
         const qText = document.getElementById('question-text');
         const qAnswers = document.getElementById('question-answers');
         const timerFill = document.getElementById('question-timer-fill');
+        const timerText = document.getElementById('question-timer-text');
 
         overlay.classList.remove('hidden');
         qText.textContent = data.question;
         qAnswers.innerHTML = '';
+
+        // Timer numerical countdown
+        let timeLeft = data.timeLimit;
+        timerText.textContent = `${timeLeft}s`;
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
+        questionTimerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft >= 0) {
+                timerText.textContent = `${timeLeft}s`;
+            } else {
+                clearInterval(questionTimerInterval);
+            }
+        }, 1000);
 
         let answered = false;
 
@@ -197,6 +212,7 @@ const UI = (() => {
     }
 
     function hideQuestion() {
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
         document.getElementById('question-overlay').classList.add('hidden');
     }
 

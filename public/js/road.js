@@ -26,9 +26,10 @@ const Road = (() => {
         roadX = (canvasWidth - roadWidth) / 2;
     }
 
-    function draw(ctx, cameraY, canvasWidth, canvasHeight) {
+    function draw(ctx, distance, canvasWidth, canvasHeight) {
         const w = canvasWidth;
         const h = canvasHeight;
+        const d = distance;
 
         // Grass background
         ctx.fillStyle = grassColor1;
@@ -36,7 +37,7 @@ const Road = (() => {
 
         // Grass stripes (scrolling)
         const stripeH = 40;
-        const offsetY = cameraY % (stripeH * 2);
+        const offsetY = d % (stripeH * 2);
         ctx.fillStyle = grassColor2;
         for (let y = -stripeH * 2 + offsetY; y < h + stripeH; y += stripeH * 2) {
             ctx.fillRect(0, y, w, stripeH);
@@ -70,7 +71,7 @@ const Road = (() => {
         for (let i = 1; i < laneCount; i++) {
             const x = roadX + i * laneWidth - dashW / 2;
             const totalDash = dashH + dashGap;
-            const startOffset = cameraY % totalDash;
+            const startOffset = d % totalDash;
             for (let y = -totalDash + startOffset; y < h + totalDash; y += totalDash) {
                 ctx.fillRect(x, y, dashW, dashH);
             }
@@ -78,12 +79,12 @@ const Road = (() => {
         ctx.globalAlpha = 1.0;
 
         // Decorative grass details (trees/bushes along road)
-        drawRoadsideDecor(ctx, cameraY, canvasWidth, canvasHeight);
+        drawRoadsideDecor(ctx, d, canvasWidth, canvasHeight);
     }
 
-    function drawRoadsideDecor(ctx, cameraY, w, h) {
+    function drawRoadsideDecor(ctx, d, w, h) {
         const spacing = 200;
-        const offset = cameraY % spacing;
+        const offset = d % spacing;
 
         for (let y = -spacing + offset; y < h + spacing; y += spacing) {
             // Left side trees

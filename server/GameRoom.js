@@ -422,7 +422,7 @@ class GameRoom {
                 id: p.id,
                 name: p.name,
                 lane: p.lane,
-                distance: Math.floor(p.distance),
+                distance: p.distance,
                 color: p.color,
                 colorName: p.colorName,
                 status: p.status,

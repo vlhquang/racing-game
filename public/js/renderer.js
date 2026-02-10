@@ -10,6 +10,11 @@ const Renderer = (() => {
     let lastFrameTime = 0;
     let running = false;
 
+    // Smooth distance tracking
+    const displayDistances = new Map(); // id -> smoothed distance
+    const serverDistances = new Map();  // id -> raw server distance
+    const playerSpeeds = new Map();     // id -> current speed (for extrapolation)
+
     function init(canvasEl) {
         canvas = canvasEl;
         ctx = canvas.getContext('2d');
@@ -47,22 +52,36 @@ const Renderer = (() => {
     function setGameState(state, lastInputTime) {
         gameState = state;
 
-        // Reconciliation
+        if (gameState && gameState.players) {
+            for (const p of gameState.players) {
+                serverDistances.set(p.id, p.distance);
+
+                // Track speed for extrapolation (default to base if not provided)
+                // Note: The server should really send 'currentSpeed' in gameState
+                // For now we assume they move at baseSpeed if not penalized/stopped
+                let speed = 200; // Base speed default
+                if (p.status === 'stopped') speed = 0;
+                else if (p.status === 'spinning') speed = 200 * 0.3; // config values
+                else if (p.status === 'penalized') speed = 200 * 0.6;
+                playerSpeeds.set(p.id, speed);
+
+                // Initialize display distance if new
+                if (!displayDistances.has(p.id)) {
+                    displayDistances.set(p.id, p.distance);
+                }
+            }
+        }
+
+        // Reconciliation logic
         if (myId && gameState.players) {
             const serverPlayer = gameState.players.find(p => p.id === myId);
             if (serverPlayer) {
-                // If we have a prediction
                 if (predictedLane !== null) {
-                    // If server matches prediction, clear prediction (we are synced)
                     if (serverPlayer.lane === predictedLane) {
                         predictedLane = null;
+                    } else if (Date.now() - predictionTimestamp > 500) {
+                        predictedLane = null;
                     }
-                    // If server disagrees, check if we should snap back
-                    // If enough time has passed since input (e.g. 500ms) and still mismatch, likely invalid move -> Snap
-                    else if (Date.now() - predictionTimestamp > 500) {
-                        predictedLane = null; // Snap to server
-                    }
-                    // Else: keep showing predictedLane (optimistic)
                 }
             }
         }
@@ -73,14 +92,11 @@ const Renderer = (() => {
         const p = gameState.players.find(p => p.id === myId);
         if (!p) return;
 
-        // Base lane on current prediction OR server state
         let currentLane = (predictedLane !== null) ? predictedLane : p.lane;
 
-        // Apply move logic locally
         if (direction === 'left' && currentLane > 0) currentLane--;
         else if (direction === 'right' && currentLane < laneCount - 1) currentLane++;
 
-        // Store prediction
         predictedLane = currentLane;
         predictionTimestamp = Date.now();
     }
@@ -102,20 +118,36 @@ const Renderer = (() => {
 
         if (!gameState || !gameState.players) return;
 
+        // 1. Update smooth distances for all players
+        const playerDistances = {};
+        for (const p of gameState.players) {
+            let current = displayDistances.get(p.id) || p.distance;
+            const target = serverDistances.get(p.id) || p.distance;
+            const speed = playerSpeeds.get(p.id) || 0;
+
+            // Extrapolate
+            current += speed * dt;
+
+            // Interpolate/Spring: pull towards server distance if they drift
+            const diff = target - current;
+            if (Math.abs(diff) > 200) {
+                current = target;
+            } else {
+                current += diff * 0.1;
+            }
+
+            displayDistances.set(p.id, current);
+            playerDistances[p.id] = current;
+        }
+
         const myPlayer = gameState.players.find(p => p.id === myId);
         if (!myPlayer) return;
 
-        // Camera follows current player
-        // Override with prediction for SMOOTH local movement
-        const displayLane = (predictedLane !== null) ? predictedLane : myPlayer.lane;
+        const mySmoothDist = playerDistances[myId];
 
-        // Note: myPlayer.distance is still from server (delayed), but lane is instant.
-        // This creates a "teleport" effect if we don't smooth it. 
-        // Car.js has 'updateTransition' which smooths the visual x-coord.
+        // Camera follow
+        const dist = mySmoothDist;
 
-        const cameraY = myPlayer.distance % 200; // scrolling offset
-
-        // Screen shake
         Effects.update(dt);
         const shake = Effects.getShakeOffset(dt);
 
@@ -123,12 +155,12 @@ const Renderer = (() => {
         ctx.translate(shake.x, shake.y);
 
         // Draw road
-        Road.draw(ctx, cameraY, width, height);
+        Road.draw(ctx, dist, width, height);
 
         // Draw obstacles
         for (const obs of gameState.obstacles) {
-            const relDist = obs.distance - myPlayer.distance;
-            const screenY = height * 0.75 - relDist * 0.7; // obstacles scroll down from top
+            const relDist = obs.distance - mySmoothDist;
+            const screenY = height * 0.75 - relDist * 0.7;
 
             if (screenY < -50 || screenY > height + 50) continue;
 
@@ -136,8 +168,7 @@ const Renderer = (() => {
             Obstacles.draw(ctx, obs, obsX, screenY, time);
         }
 
-        // Draw all cars
-        // Sort: draw other players first, then self on top
+        // Draw cars
         const sortedPlayers = [...gameState.players].sort((a, b) => {
             if (a.id === myId) return 1;
             if (b.id === myId) return -1;
@@ -145,7 +176,6 @@ const Renderer = (() => {
         });
 
         for (const p of sortedPlayers) {
-            // Use predicted lane for SELF
             let targetLane = p.lane;
             if (p.id === myId && predictedLane !== null) {
                 targetLane = predictedLane;
@@ -155,10 +185,12 @@ const Renderer = (() => {
             const carX = Road.getLaneX(smoothLane);
 
             let carY;
+            const pSmoothDist = playerDistances[p.id];
+
             if (p.id === myId) {
-                carY = height * 0.75; // Current player fixed at bottom 25%
+                carY = height * 0.75;
             } else {
-                const relDist = p.distance - myPlayer.distance;
+                const relDist = pSmoothDist - mySmoothDist;
                 carY = height * 0.75 - relDist * 0.7;
             }
 
@@ -169,20 +201,14 @@ const Renderer = (() => {
             Car.drawNameTag(ctx, carX, carY, p.name, p.color);
         }
 
-        // Draw particles
         Effects.drawParticles(ctx);
-
         ctx.restore();
 
-        // Draw effect overlay (not affected by shake)
         if (myPlayer.status !== 'normal') {
             Effects.drawEffectOverlay(ctx, width, height, myPlayer.status, myPlayer.effectType, time);
         }
 
-        // Draw HUD
         HUD.draw(ctx, width, height, gameState, myId);
-
-        // Draw notifications
         Effects.drawNotifications(ctx, width, height);
     }
 
