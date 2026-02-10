@@ -41,8 +41,48 @@ const Renderer = (() => {
         running = false;
     }
 
-    function setGameState(state) {
+    let predictedLane = null;
+    let predictionTimestamp = 0;
+
+    function setGameState(state, lastInputTime) {
         gameState = state;
+
+        // Reconciliation
+        if (myId && gameState.players) {
+            const serverPlayer = gameState.players.find(p => p.id === myId);
+            if (serverPlayer) {
+                // If we have a prediction
+                if (predictedLane !== null) {
+                    // If server matches prediction, clear prediction (we are synced)
+                    if (serverPlayer.lane === predictedLane) {
+                        predictedLane = null;
+                    }
+                    // If server disagrees, check if we should snap back
+                    // If enough time has passed since input (e.g. 500ms) and still mismatch, likely invalid move -> Snap
+                    else if (Date.now() - predictionTimestamp > 500) {
+                        predictedLane = null; // Snap to server
+                    }
+                    // Else: keep showing predictedLane (optimistic)
+                }
+            }
+        }
+    }
+
+    function predictMove(direction, laneCount) {
+        if (!gameState || !myId) return;
+        const p = gameState.players.find(p => p.id === myId);
+        if (!p) return;
+
+        // Base lane on current prediction OR server state
+        let currentLane = (predictedLane !== null) ? predictedLane : p.lane;
+
+        // Apply move logic locally
+        if (direction === 'left' && currentLane > 0) currentLane--;
+        else if (direction === 'right' && currentLane < laneCount - 1) currentLane++;
+
+        // Store prediction
+        predictedLane = currentLane;
+        predictionTimestamp = Date.now();
     }
 
     function loop(timestamp) {
@@ -66,6 +106,13 @@ const Renderer = (() => {
         if (!myPlayer) return;
 
         // Camera follows current player
+        // Override with prediction for SMOOTH local movement
+        const displayLane = (predictedLane !== null) ? predictedLane : myPlayer.lane;
+
+        // Note: myPlayer.distance is still from server (delayed), but lane is instant.
+        // This creates a "teleport" effect if we don't smooth it. 
+        // Car.js has 'updateTransition' which smooths the visual x-coord.
+
         const cameraY = myPlayer.distance % 200; // scrolling offset
 
         // Screen shake
@@ -98,7 +145,13 @@ const Renderer = (() => {
         });
 
         for (const p of sortedPlayers) {
-            const smoothLane = Car.updateTransition(p.id, p.lane, dt);
+            // Use predicted lane for SELF
+            let targetLane = p.lane;
+            if (p.id === myId && predictedLane !== null) {
+                targetLane = predictedLane;
+            }
+
+            const smoothLane = Car.updateTransition(p.id, targetLane, dt);
             const carX = Road.getLaneX(smoothLane);
 
             let carY;
@@ -135,5 +188,5 @@ const Renderer = (() => {
 
     function getTime() { return time; }
 
-    return { init, start, stop, setGameState, resize, getTime };
+    return { init, start, stop, setGameState, resize, getTime, predictMove };
 })();

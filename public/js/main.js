@@ -25,23 +25,50 @@
         laneCount = data.laneCount || 3;
         config = data.config || {};
 
+        // Client-side prediction state
+        let predictedLane = null;
+        let lastInputTime = 0;
+        const PING_COMPENSATION = 300; // ms to ignore server state after input
+
         if (!gameStarted) {
             gameStarted = true;
             console.log('[Client] Initializing renderer and input');
             Road.init(laneCount, config.laneWidth || 80, canvas.width);
             Renderer.start(UI.getPlayerId());
 
-            // Initialize input controls
+            // Initialize input controls with PREDICTION
             Input.init(
-                () => Network.sendInput(UI.getRoomCode(), 'left'),
-                () => Network.sendInput(UI.getRoomCode(), 'right')
+                () => handleInput('left'),
+                () => handleInput('right')
             );
         }
     });
 
+    function handleInput(direction) {
+        const myId = UI.getPlayerId();
+        // Network send
+        Network.sendInput(UI.getRoomCode(), direction);
+
+        // Local prediction
+        if (predictedLane === null) {
+            // Initialize from current renderer state or default
+            // We need to fetch current lane from Renderer/GameState to be safe
+            // But main.js doesn't strictly know it yet. 
+            // Let's rely on Renderer to help or simple local tracking.
+            // Simplified: Assume we track it or get it from latest server state.
+        }
+
+        lastInputTime = Date.now();
+
+        // We can't easily get current lane here without querying Renderer/GameState.
+        // Let's pass the prediction intent to Renderer instead!
+        Renderer.predictMove(direction, laneCount);
+    }
+
     // Network event: game state update
     Network.on('onGameState', (data) => {
-        Renderer.setGameState(data);
+        // Reconciliation logic moved to Renderer for simpler state management
+        Renderer.setGameState(data, lastInputTime);
     });
 
     // Network event: obstacle hit (for effects)
