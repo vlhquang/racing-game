@@ -18,6 +18,7 @@
     let gameStarted = false;
     let laneCount = 3;
     let config = {};
+    let lastInputTime = 0;
 
     // Network event: countdown
     Network.on('onCountdown', (data) => {
@@ -27,7 +28,7 @@
 
         // Client-side prediction state
         let predictedLane = null;
-        let lastInputTime = 0;
+        lastInputTime = 0;
         const PING_COMPENSATION = 300; // ms to ignore server state after input
 
         if (!gameStarted) {
