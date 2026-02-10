@@ -160,9 +160,9 @@ const Renderer = (() => {
         // Draw obstacles
         for (const obs of gameState.obstacles) {
             const relDist = obs.distance - mySmoothDist;
-            const screenY = height * 0.75 - relDist * 0.7;
+            const screenY = height * 0.75 - relDist * 1.0;
 
-            if (screenY < -50 || screenY > height + 50) continue;
+            if (screenY < -100 || screenY > height + 100) continue;
 
             const obsX = Road.getLaneX(obs.lane);
             Obstacles.draw(ctx, obs, obsX, screenY, time);
@@ -191,7 +191,7 @@ const Renderer = (() => {
                 carY = height * 0.75;
             } else {
                 const relDist = pSmoothDist - mySmoothDist;
-                carY = height * 0.75 - relDist * 0.7;
+                carY = height * 0.75 - relDist * 1.0;
             }
 
             if (carY < -100 || carY > height + 100) continue;

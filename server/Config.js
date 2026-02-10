@@ -14,7 +14,8 @@ const CONFIG = {
     // Questions
     questionTime: 7,          // seconds to answer
     correctRewardTime: 2,     // seconds free movement (invincible)
-    questionCooldown: 15,     // seconds between questions
+    questionIntervalMin: 10,  // min seconds between questions
+    questionIntervalMax: 15,  // max seconds between questions
     maxQuestions: 5,           // per game
 
     // Penalty Configuration

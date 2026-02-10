@@ -114,7 +114,11 @@ class GameRoom {
         this.obstacles = [];
         this.nextObstacleDistance = 400;
         this.questionsUsed = 0;
-        this.questionCooldownTimer = 10;
+
+        // Random initial cooldown between 10-15s
+        this.questionCooldownTimer = this.config.questionIntervalMin +
+            Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
+
         this.gameLoopInterval = setInterval(() => this.tick(), 16);
     }
 
@@ -289,7 +293,10 @@ class GameRoom {
     triggerQuestion(triggeredBy) {
         if (this.state !== 'RACING') return;
         this.questionsUsed++;
-        this.questionCooldownTimer = this.config.questionCooldown;
+
+        // Set next random cooldown between 10-15s
+        this.questionCooldownTimer = this.config.questionIntervalMin +
+            Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
 
         const question = this.questionManager.getRandomQuestion();
         if (!question) return;
@@ -320,10 +327,6 @@ class GameRoom {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
         if (this.questionAnswers.has(playerId)) return;
         this.questionAnswers.set(playerId, answerIndex);
-        if (this.questionAnswers.size >= this.players.size) {
-            clearTimeout(this.questionTimer);
-            setTimeout(() => this.resolveQuestion(), 500);
-        }
     }
 
     resolveQuestion() {

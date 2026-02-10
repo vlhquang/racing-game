@@ -174,16 +174,22 @@ const UI = (() => {
 
         // Timer numerical countdown
         let timeLeft = data.timeLimit;
-        timerText.textContent = `${timeLeft}s`;
+        timerText.textContent = `${timeLeft.toFixed(1)}s`;
+        timerText.style.color = ''; // Reset color
         if (questionTimerInterval) clearInterval(questionTimerInterval);
         questionTimerInterval = setInterval(() => {
-            timeLeft--;
+            timeLeft -= 0.1;
             if (timeLeft >= 0) {
-                timerText.textContent = `${timeLeft}s`;
+                timerText.textContent = `${timeLeft.toFixed(1)}s`;
+                // Turn red when low time (< 3s)
+                if (timeLeft < 3) {
+                    timerText.style.color = '#e94560';
+                }
             } else {
+                timerText.textContent = "0.0s";
                 clearInterval(questionTimerInterval);
             }
-        }, 1000);
+        }, 1000 / 10);
 
         let answered = false;
 
