@@ -9,6 +9,9 @@ const Renderer = (() => {
     let time = 0;
     let lastFrameTime = 0;
     let running = false;
+    let config = null;
+    let seed = null;
+    let onHitCallback = null;
 
     // Smooth distance tracking
     const displayDistances = new Map(); // id -> smoothed distance
@@ -48,20 +51,18 @@ const Renderer = (() => {
     let predictedLane = null;
     let predictionTimestamp = 0;
 
-    function setGameState(state, lastInputTime) {
+    function setGameState(state, lastInputTime, gameConfig) {
         gameState = state;
+        if (gameConfig) config = gameConfig;
+        if (state && state.seed) seed = state.seed;
 
         if (gameState && gameState.players) {
             const now = performance.now();
             for (const p of gameState.players) {
                 const prev = serverSnapshots.get(p.id);
 
-                // If we have a previous snapshot, we can calculate a more accurate "network speed"
-                let networkSpeed = 200; // default fallout
-                if (p.status === 'stopped') networkSpeed = 0;
-                else if (p.status === 'spinning') networkSpeed = 60;
-                else if (p.status === 'penalized') networkSpeed = 120;
-                else if (p.status === 'rewarded') networkSpeed = 220;
+                // Use the speed provided by the server for authoritative interpolation
+                const networkSpeed = p.speed !== undefined ? p.speed : 0;
 
                 serverSnapshots.set(p.id, {
                     dist: p.distance,
@@ -90,6 +91,13 @@ const Renderer = (() => {
             }
         }
     }
+    function getSeedRandom(modifier) {
+        if (!seed) return Math.random();
+        let s = (seed + Math.floor(modifier)) >>> 0;
+        s = Math.imul(s, 1103515245) + 12345;
+        s = s >>> 0;
+        return (s & 0x7fffffff) / 0x7fffffff;
+    }
 
     function predictMove(direction, laneCount) {
         if (!gameState || !myId) return;
@@ -103,6 +111,66 @@ const Renderer = (() => {
 
         predictedLane = currentLane;
         predictionTimestamp = Date.now();
+    }
+
+    function checkCollisions(mySmoothDist, myLane) {
+        if (!seed || !config || !gameState || !onHitCallback) return;
+
+        const initialDelayDist = config.baseSpeed * (config.initialObstacleDelay || 3);
+        const laneCount = Road.getLaneCount();
+
+        // 1. Check Deterministic Obstacles (Stone/Oil)
+        // We only check a small range around the player
+        const checkRangeStart = Math.floor(mySmoothDist / 300) * 300;
+        const checkRangeEnd = checkRangeStart + 600;
+
+        for (let d = checkRangeStart; d < checkRangeEnd; d += 300) {
+            if (d < initialDelayDist + 600) continue;
+
+            // Row-based logic matching server & renderer
+            const numRand = getSeedRandom(d + 789);
+            const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
+
+            const lanes = [];
+            for (let i = 0; i < laneCount; i++) lanes.push(i);
+            for (let i = lanes.length - 1; i > 0; i--) {
+                const jRand = getSeedRandom(d + i + 999);
+                const j = Math.floor(jRand * (i + 1));
+                [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+            }
+
+            const selectedLanes = lanes.slice(0, numObstacles);
+
+            for (const lane of selectedLanes) {
+                if (lane !== myLane) continue;
+
+                // Collided?
+                if (Math.abs(mySmoothDist - d) < 40) {
+                    const typeRand = getSeedRandom(d + lane + 555);
+                    const type = (typeRand < 0.6) ? 'stone' : 'oil';
+
+                    // Check if already deactivated on server
+                    const isDeactivated = gameState.obstacles && gameState.obstacles.some(o =>
+                        o.distance === d && o.lane === lane && !o.active
+                    );
+
+                    if (!isDeactivated) {
+                        onHitCallback({ type, lane, distance: d });
+                    }
+                }
+            }
+        }
+
+        // 2. Check Server-Authoritative Obstacles (Questions)
+        if (gameState.obstacles) {
+            for (const obs of gameState.obstacles) {
+                if (obs.type === 'question' && obs.active && obs.lane === myLane) {
+                    if (Math.abs(mySmoothDist - obs.distance) < 40) {
+                        onHitCallback(obs);
+                    }
+                }
+            }
+        }
     }
 
     function loop(timestamp) {
@@ -138,14 +206,18 @@ const Renderer = (() => {
                 // Smoothing: move current display distance towards predicted distance
                 const diff = predictedServerDist - current;
 
-                // If the error is massive (>300m), snap immediately to avoid sliding cars
-                if (Math.abs(diff) > 300) {
-                    current = predictedServerDist;
+                // For the LOCAL player, we want to be very responsive to match server collision checks
+                // For REMOTE players, we want to be smooth to hide network jitter.
+                const isLocal = (p.id === myId);
+                const smoothingFactor = isLocal ? 0.8 : 0.15;
+
+                // If captured during a QUESTION phase, snap immediately to avoid drift
+                if (gameState.state !== 'RACING') {
+                    current = snap.dist; // Force snap to server distance
+                } else if (Math.abs(diff) > 300) {
+                    current = predictedServerDist; // Snap if too far
                 } else {
-                    // Smoothly interpolate. 
-                    // Factor depends on how much we want to favor server vs smoothness.
-                    // 0.15 is responsive enough but hides jitter well.
-                    current += diff * 0.15;
+                    current += diff * smoothingFactor;
                 }
             }
 
@@ -170,15 +242,67 @@ const Renderer = (() => {
         // Draw road
         Road.draw(ctx, dist, width, height);
 
-        // Draw obstacles
-        for (const obs of gameState.obstacles) {
-            const relDist = obs.distance - mySmoothDist;
-            const screenY = height * 0.75 - relDist * 1.0;
+        // 2. Draw Obstacles
+        if (seed && config) {
+            const initialDelayDist = config.baseSpeed * (config.initialObstacleDelay || 3);
+            const laneCount = Road.getLaneCount();
 
-            if (screenY < -100 || screenY > height + 100) continue;
+            const renderRangeStart = mySmoothDist - 500;
+            const renderRangeEnd = mySmoothDist + 2000;
 
-            const obsX = Road.getLaneX(obs.lane);
-            Obstacles.draw(ctx, obs, obsX, screenY, time);
+            // DRAW DETERMINISTIC OBSTACLES (Stone/Oil)
+            for (let d = 0; d < renderRangeEnd; d += 300) {
+                if (d < renderRangeStart) continue;
+                if (d < initialDelayDist + 600) continue;
+
+                // 1. Get number of obstacles for this row
+                const numRand = getSeedRandom(d + 789);
+                const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
+
+                // 2. Deterministic shuffle lanes
+                const lanes = [];
+                for (let i = 0; i < laneCount; i++) lanes.push(i);
+                for (let i = lanes.length - 1; i > 0; i--) {
+                    const jRand = getSeedRandom(d + i + 999);
+                    const j = Math.floor(jRand * (i + 1));
+                    [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+                }
+
+                const selectedLanes = lanes.slice(0, numObstacles);
+
+                for (const lane of selectedLanes) {
+                    const typeRand = getSeedRandom(d + lane + 555);
+                    const type = (typeRand < 0.6) ? 'stone' : 'oil';
+
+                    // Check if hit
+                    const isHit = gameState.obstacles && gameState.obstacles.some(o =>
+                        o.distance === d && o.lane === lane && !o.active
+                    );
+
+                    if (!isHit) {
+                        const relDist = d - mySmoothDist;
+                        const carY = height * 0.75 - relDist * 1.0;
+                        if (carY > -100 && carY < height + 100) {
+                            const roadX = Road.getLaneX(lane);
+                            Obstacles.draw(ctx, { type, lane, distance: d }, roadX, carY, time);
+                        }
+                    }
+                }
+            }
+
+            // DRAW SERVER-AUTHORITATIVE OBSTACLES (Questions)
+            if (gameState.obstacles) {
+                for (const obs of gameState.obstacles) {
+                    if (obs.type === 'question' && obs.active) {
+                        const relDist = obs.distance - mySmoothDist;
+                        const carY = height * 0.75 - relDist * 1.0;
+                        if (carY > -100 && carY < height + 100) {
+                            const roadX = Road.getLaneX(obs.lane);
+                            Obstacles.draw(ctx, obs, roadX, carY, time);
+                        }
+                    }
+                }
+            }
         }
 
         // Draw cars
@@ -194,7 +318,9 @@ const Renderer = (() => {
                 targetLane = predictedLane;
             }
 
-            const smoothLane = Car.updateTransition(p.id, targetLane, dt);
+            const isLocal = (p.id === myId);
+            const transitionSpeed = isLocal ? 18 : 8; // Remote players glide more slowly/smoothly
+            const smoothLane = Car.updateTransition(p.id, targetLane, dt, transitionSpeed);
             const carX = Road.getLaneX(smoothLane);
 
             let carY;
@@ -212,13 +338,18 @@ const Renderer = (() => {
             const scale = p.id === myId ? 1 : 0.9;
             Car.draw(ctx, carX, carY, p.color, scale, p.status, p.effectType, time);
             Car.drawNameTag(ctx, carX, carY, p.name, p.color);
+
+            // Collision Check (LOCAL ONLY)
+            if (p.id === myId && gameState.state === 'RACING' && p.status !== 'rewarded') {
+                checkCollisions(pSmoothDist, targetLane);
+            }
         }
 
         Effects.drawParticles(ctx);
         ctx.restore();
 
         if (myPlayer.status !== 'normal') {
-            Effects.drawEffectOverlay(ctx, width, height, myPlayer.status, myPlayer.effectType, time);
+            Effects.drawEffectOverlay(ctx, width, height, myPlayer.status, myPlayer.effectType, time, config);
         }
 
         HUD.draw(ctx, width, height, gameState, myId);
@@ -226,6 +357,9 @@ const Renderer = (() => {
     }
 
     function getTime() { return time; }
+    function getGameState() { return gameState; }
 
-    return { init, start, stop, setGameState, resize, getTime, predictMove };
+    function setOnHit(callback) { onHitCallback = callback; }
+
+    return { init, start, stop, setGameState, resize, getTime, predictMove, getGameState, setOnHit };
 })();

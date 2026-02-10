@@ -103,25 +103,18 @@ const Effects = (() => {
     }
 
     // Effect overlays for local player
-    function drawEffectOverlay(ctx, w, h, status, effectType, time) {
+    function drawEffectOverlay(ctx, w, h, status, effectType, time, config) {
         if (status === 'rewarded') {
             // Golden border glow
             ctx.save();
-            const grad = ctx.createLinearGradient(0, 0, w, h);
-            grad.addColorStop(0, 'rgba(245,197,24,0.15)');
-            grad.addColorStop(0.5, 'rgba(245,197,24,0)');
-            grad.addColorStop(1, 'rgba(245,197,24,0.15)');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
             ctx.fillRect(0, 0, w, h);
-
-            // Border
-            ctx.strokeStyle = `rgba(245,197,24,${0.3 + Math.sin(time * 5) * 0.15})`;
-            ctx.lineWidth = 4;
-            ctx.strokeRect(2, 2, w - 4, h - 4);
             ctx.restore();
         } else if (status === 'penalized') {
             if (effectType === 'blur') {
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                const opacity = (config && config.penalties && config.penalties.types.blur) ?
+                    config.penalties.types.blur.opacity : 0.8;
+                ctx.fillStyle = `rgba(0,0,0,${opacity})`;
                 ctx.fillRect(0, 0, w, h);
             } else if (effectType === 'reverse') {
                 // Red tint

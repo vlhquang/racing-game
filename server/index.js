@@ -110,6 +110,12 @@ io.on('connection', (socket) => {
         room.handleInput(socket.id, direction);
     });
 
+    socket.on('obstacle-hit', ({ roomCode, obstacle }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        room.onObstacleHit(socket.id, obstacle);
+    });
+
     socket.on('answer-question', ({ roomCode, answerIndex }) => {
         const room = rooms.get(roomCode);
         if (!room) return;

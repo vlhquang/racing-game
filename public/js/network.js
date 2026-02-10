@@ -96,9 +96,13 @@ const Network = (() => {
         socket.emit('answer-question', { roomCode, answerIndex });
     }
 
+    function sendObstacleHit(roomCode, obstacle) {
+        socket.emit('obstacle-hit', { roomCode, obstacle });
+    }
+
     function getSocketId() {
         return socket ? socket.id : null;
     }
 
-    return { connect, on, createRoom, joinRoom, startGame, sendInput, answerQuestion, getSocketId };
+    return { connect, on, createRoom, joinRoom, startGame, sendInput, answerQuestion, sendObstacleHit, getSocketId };
 })();

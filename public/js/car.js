@@ -5,12 +5,12 @@ const Car = (() => {
     // Smooth lane transition
     const laneTransitions = {};
 
-    function updateTransition(playerId, targetLane, dt) {
+    function updateTransition(playerId, targetLane, dt, speedMultiplier) {
         if (!laneTransitions[playerId]) {
             laneTransitions[playerId] = { current: targetLane };
         }
         const t = laneTransitions[playerId];
-        const speed = 12; // lerp speed
+        const speed = speedMultiplier || 12; // lerp speed
         t.current += (targetLane - t.current) * Math.min(speed * dt, 1);
         return t.current;
     }

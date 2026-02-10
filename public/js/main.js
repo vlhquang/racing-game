@@ -19,6 +19,7 @@
     let laneCount = 3;
     let config = {};
     let lastInputTime = 0;
+    let localHitObstacles = new Set(); // To prevent multiple hits on same box
     let predictedLane = null;
 
     // Network event: countdown
@@ -38,29 +39,61 @@
                 () => handleInput('left'),
                 () => handleInput('right')
             );
+
+            // Register Client-Side Collision Handler
+            Renderer.setOnHit(handleObstacleHit);
         }
     });
 
     function handleInput(direction) {
+        if (!gameStarted) return;
+
+        // Block input if game is not racing
+        const state = Renderer.getGameState();
+        if (!state || state.state !== 'RACING') return;
+
+        // Block input if paralyzed
         const myId = UI.getPlayerId();
+        const me = state.players.find(p => p.id === myId);
+        if (me && (me.status === 'stopped' || me.status === 'spinning')) {
+            return;
+        }
+
         // Network send
         Network.sendInput(UI.getRoomCode(), direction);
 
         // Local prediction
-        if (predictedLane === null) {
-            // Simplified: Assume we track it or get it from latest server state.
+        lastInputTime = Date.now();
+        Renderer.predictMove(direction, laneCount);
+    }
+
+    function handleObstacleHit(obstacle) {
+        const obsId = obstacle.id || `obs_${obstacle.distance}_${obstacle.lane}`;
+        if (localHitObstacles.has(obsId)) return;
+
+        localHitObstacles.add(obsId);
+        console.log('[Client] LOCAL HIT:', obsId, obstacle.type);
+
+        // Instant feedback
+        if (obstacle.type === 'stone') {
+            Effects.triggerShake(8, 0.5);
+            Effects.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
+            // We can even locally set status if we want extreme snappiness
+        } else if (obstacle.type === 'oil') {
+            Effects.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
         }
 
-        lastInputTime = Date.now();
+        // Report to server
+        Network.sendObstacleHit(UI.getRoomCode(), obstacle);
 
-        // Pass prediction intent to Renderer
-        Renderer.predictMove(direction, laneCount);
+        // Tell renderer to wait a bit before snapping back to server distance
+        // because we just hit something and speed will drop
+        lastInputTime = Date.now();
     }
 
     // Network event: game state update
     Network.on('onGameState', (data) => {
-        // Reconciliation logic moved to Renderer for simpler state management
-        Renderer.setGameState(data, lastInputTime);
+        Renderer.setGameState(data, lastInputTime, config);
     });
 
     // Network event: obstacle hit (for effects)

@@ -81,6 +81,7 @@ class GameRoom {
         console.log(`[GameRoom] Room ${this.roomCode}: Countdown initiated`);
         this.state = 'COUNTDOWN';
         this.config.roadWidth = this.getLaneCount() * this.config.laneWidth;
+        this.seed = Math.floor(Math.random() * 1000000);
 
         const laneCount = this.getLaneCount();
         let i = 0;
@@ -95,14 +96,14 @@ class GameRoom {
         }
 
         let count = 3;
-        this.io.to(this.roomCode).emit('countdown', { count, laneCount, config: this.config });
+        this.io.to(this.roomCode).emit('countdown', { count, laneCount, config: this.config, seed: this.seed });
         const countdownInterval = setInterval(() => {
             count--;
             if (count > 0) {
-                this.io.to(this.roomCode).emit('countdown', { count, laneCount, config: this.config });
+                this.io.to(this.roomCode).emit('countdown', { count, laneCount, config: this.config, seed: this.seed });
             } else {
                 clearInterval(countdownInterval);
-                this.io.to(this.roomCode).emit('countdown', { count: 0, laneCount, config: this.config });
+                this.io.to(this.roomCode).emit('countdown', { count: 0, laneCount, config: this.config, seed: this.seed });
                 this.beginRace();
             }
         }, 1000);
@@ -130,95 +131,100 @@ class GameRoom {
     }
 
     tick() {
-        if (this.state !== 'RACING') return;
-
         const now = Date.now();
         const dt = (now - this.lastTick) / 1000;
         this.lastTick = now;
 
-        this.timeRemaining -= dt;
-        if (this.timeRemaining <= 0) {
-            this.timeRemaining = 0;
-            this.finishGame();
-            return;
-        }
+        if (this.state === 'RACING') {
 
-        if (this.questionCooldownTimer > 0) {
-            this.questionCooldownTimer -= dt;
-        }
-
-        let maxDistance = 0;
-        for (const p of this.players.values()) {
-            if (p.distance > maxDistance) maxDistance = p.distance;
-        }
-
-        if (maxDistance >= this.nextObstacleDistance - 600) {
-            this.spawnObstacles(this.nextObstacleDistance);
-            this.nextObstacleDistance += 200 + Math.random() * 200;
-        }
-
-        for (const p of this.players.values()) {
-            // 1. Handle effects expiration
-            if (p.effectTimer > 0) {
-                p.effectTimer -= dt;
-                if (p.effectTimer <= 0) {
-                    p.effectTimer = 0;
-                    p.status = 'normal';
-                    p.effectType = null;
-                    p.speed = this.config.baseSpeed;
-                }
+            this.timeRemaining -= dt;
+            if (this.timeRemaining <= 0) {
+                this.timeRemaining = 0;
+                this.finishGame();
+                return;
             }
 
-            // 2. Apply movement based on status/penalty
-            let moveSpeed = p.speed;
-
-            if (p.status === 'stopped') {
-                moveSpeed = 0;
-            } else if (p.status === 'spinning') {
-                moveSpeed = p.speed * this.config.penalties.types.spin.speedMultiplier;
-            } else if (p.status === 'penalized') {
-                // Apply penalty speed multipliers
-                const pConfig = this.config.penalties.types[p.effectType];
-                if (pConfig) {
-                    moveSpeed = p.speed * pConfig.speedMultiplier;
-                }
-            } else if (p.status === 'rewarded') {
-                // Shield/Invincible: Apply reward speed boost
-                moveSpeed = p.speed * (this.config.rewardSpeedMultiplier || 1.1);
+            if (this.questionCooldownTimer > 0) {
+                this.questionCooldownTimer -= dt;
             }
 
-            p.distance += moveSpeed * dt;
+            let maxDistance = 0;
+            for (const p of this.players.values()) {
+                if (p.distance > maxDistance) maxDistance = p.distance;
+            }
 
-            // 3. Collision Logic
-            // "rewarded" = Invincible Shield -> NO collisions allowed
-            if (p.status !== 'rewarded') {
-                // Check obstacle collisions
-                for (const obs of this.obstacles) {
-                    if (obs.active && obs.lane === p.lane &&
-                        Math.abs(p.distance - obs.distance) < 40) {
+            if (maxDistance >= this.nextObstacleDistance - 600) {
+                this.spawnObstacles(this.nextObstacleDistance);
+                this.nextObstacleDistance += 300; // Deterministic step
+            }
 
-                        // Special rule: BLUR penalty still allows collisions!
-                        // Other penalties might also allow collision if they don't stop movement
-                        // But if player is 'stopped' or 'spinning', they usually can't hit another? 
-                        // Actually 'spinning' moves slowly, so could hit. 'stopped' is stationary.
+            for (const p of this.players.values()) {
+                // 1. Handle effects expiration
+                if (p.effectTimer > 0) {
+                    p.effectTimer -= dt;
+                    if (p.effectTimer <= 0) {
+                        p.effectTimer = 0;
+                        p.status = 'normal';
+                        p.effectType = null;
+                        p.speed = this.config.baseSpeed;
+                    }
+                }
 
-                        // Prevent multi-hit if already stopped/spinning (unless it's a question)
-                        const isDisabled = (p.status === 'stopped' || p.status === 'spinning');
+                // 2. Apply movement based on status/penalty
+                let moveSpeed = p.speed;
 
-                        // If Disabled, likely shouldn't trigger new stone/oil, 
-                        // BUT if it's a Question, maybe? 
-                        // Let's keep it simple: if disabled, ignore collisions to avoid lock-lock.
-                        if (isDisabled && obs.type !== 'question') continue;
+                if (p.status === 'stopped') {
+                    moveSpeed = 0;
+                } else if (p.status === 'spinning') {
+                    moveSpeed = p.speed * this.config.penalties.types.spin.speedMultiplier;
+                } else if (p.status === 'penalized') {
+                    // Apply penalty speed multipliers
+                    const pConfig = this.config.penalties.types[p.effectType];
+                    if (pConfig) {
+                        moveSpeed = p.speed * pConfig.speedMultiplier;
+                    }
+                } else if (p.status === 'rewarded') {
+                    // Shield/Invincible: Apply reward speed boost
+                    moveSpeed = p.speed * (this.config.rewardSpeedMultiplier || 1.1);
+                }
 
-                        obs.active = false;
-                        this.handleObstacleHit(p, obs);
+                p.distance += moveSpeed * dt;
+
+                // 3. Collision Logic
+                // "rewarded" = Invincible Shield -> NO collisions allowed
+                if (p.status !== 'rewarded') {
+                    // Check obstacle collisions
+                    for (const obs of this.obstacles) {
+                        if (obs.active && obs.lane === p.lane &&
+                            Math.abs(p.distance - obs.distance) < 40) {
+
+                            // Special rule: BLUR penalty still allows collisions!
+                            // Other penalties might also allow collision if they don't stop movement
+                            // But if player is 'stopped' or 'spinning', they usually can't hit another? 
+                            // Actually 'spinning' moves slowly, so could hit. 'stopped' is stationary.
+
+                            // Prevent multi-hit if already stopped/spinning (unless it's a question)
+                            const isDisabled = (p.status === 'stopped' || p.status === 'spinning');
+
+                            // If Disabled, likely shouldn't trigger new stone/oil, 
+                            // BUT if it's a Question, maybe? 
+                            // Let's keep it simple: if disabled, ignore collisions to avoid lock-lock.
+                            if (isDisabled && obs.type !== 'question') continue;
+
+                            obs.active = false;
+                            this.handleObstacleHit(p, obs);
+                        }
                     }
                 }
             }
-        }
 
-        const minDist = Math.min(...[...this.players.values()].map(p => p.distance)) - 500;
-        this.obstacles = this.obstacles.filter(o => o.distance > minDist);
+            const minDist = Math.min(...[...this.players.values()].map(p => p.distance)) - 500;
+            const previousObstacleCount = this.obstacles.length;
+            this.obstacles = this.obstacles.filter(o => o.distance > minDist);
+
+            // If an active question was missed, reset the state (so next one can spawn)
+            // Note: we don't necessarily reset the cooldown here if we want a fixed interval
+        }
 
         // Broadcast every ~45ms (approx 22 times per second)
         // This reduces bandwidth and jitter over TCP/ngrok
@@ -228,48 +234,73 @@ class GameRoom {
         }
     }
 
+    getSeedRandom(seedModifier) {
+        let s = (this.seed + Math.floor(seedModifier)) >>> 0;
+        s = Math.imul(s, 1103515245) + 12345;
+        s = s >>> 0;
+        return (s & 0x7fffffff) / 0x7fffffff;
+    }
+
     spawnObstacles(atDistance) {
         const laneCount = this.getLaneCount();
-        const numObstacles = Math.floor(Math.random() * (laneCount - 1)) + 1;
+
+        // 1. Regular Deterministic Obstacles (Stone/Oil) - Row-based logic
+        // We use the same count/shuffle logic as before, but deterministically.
+        const numRand = this.getSeedRandom(atDistance + 789);
+        const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
+
         const lanes = [];
         for (let i = 0; i < laneCount; i++) lanes.push(i);
+
+        // Deterministic shuffle using seeds
         for (let i = lanes.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const jRand = this.getSeedRandom(atDistance + i + 999);
+            const j = Math.floor(jRand * (i + 1));
             [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
         }
 
         const selectedLanes = lanes.slice(0, numObstacles);
-        let questionSpawned = false;
-        const hasQuestionOnRoad = this.obstacles.some(o => o.type === 'question' && o.active);
-        const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
-            this.questionsUsed < this.config.maxQuestions &&
-            !hasQuestionOnRoad;
 
         for (const lane of selectedLanes) {
-            let type;
-            const rand = Math.random();
-
-            // Force a question if ready and not yet spawned in this set
-            if (canSpawnQuestion && !questionSpawned) {
-                type = 'question';
-                questionSpawned = true;
-            } else if (rand < 0.55) {
-                type = 'stone';
-            } else {
-                type = 'oil';
-            }
+            const typeRand = this.getSeedRandom(atDistance + lane + 555);
+            const type = (typeRand < 0.6) ? 'stone' : 'oil';
 
             this.obstacles.push({
-                id: Math.random().toString(36).substr(2, 9),
+                id: `obs_${Math.floor(atDistance)}_${lane}`,
                 type,
                 lane,
-                distance: atDistance + (Math.random() * 50),
+                distance: atDistance,
                 active: true
             });
         }
+
+        // 2. Question Spawning (Server Authoritative)
+        const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
+            this.questionsUsed < this.config.maxQuestions &&
+            !this.obstacles.some(o => o.type === 'question' && o.active);
+
+        if (canSpawnQuestion) {
+            const spawnRand = Math.random();
+            if (spawnRand < 0.4) { // 40% chance if ready
+                const lane = Math.floor(Math.random() * laneCount);
+                this.obstacles.push({
+                    id: 'q_' + Math.random().toString(36).substr(2, 5),
+                    type: 'question',
+                    lane,
+                    distance: atDistance + 60,
+                    active: true
+                });
+
+                // Reset cooldown AS SOON AS it spawns on the road
+                this.questionCooldownTimer = this.config.questionIntervalMin +
+                    Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
+
+                console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned. Next cooldown: ${Math.floor(this.questionCooldownTimer)}s`);
+            }
+        }
     }
 
-    handleObstacleHit(player, obstacle) {
+    onObstacleHit(playerId, obstacleData) {
         // If player is penalized, they CAN hit obstacles (stone/oil/question)
         // EXCEPT if the penalty is "stop" or "spin" (handled in tick loop check)
 
@@ -337,6 +368,9 @@ class GameRoom {
             answers: question.answers,
             timeLimit
         });
+
+        // IMMEDIATELY broadcast state so everyone stops
+        this.broadcastState();
 
         const questionTimeLimit = timeLimit * 1000;
         this.questionTimer = setTimeout(() => {
@@ -406,6 +440,9 @@ class GameRoom {
 
         this.io.to(this.roomCode).emit('question-result', { results, correctIndex: this.activeQuestion.correctIndex });
 
+        // Broadcast the new rewarded/penalized statuses immediately
+        this.broadcastState();
+
         this.activeQuestion = null;
         this.questionAnswers.clear();
 
@@ -414,6 +451,9 @@ class GameRoom {
                 this.state = 'RACING';
                 this.lastTick = Date.now();
                 this.gameLoopInterval = setInterval(() => this.tick(), 16);
+
+                // Immediate sync on resume
+                this.broadcastState();
                 this.io.to(this.roomCode).emit('race-resume');
             }
         }, 2000);
@@ -448,6 +488,20 @@ class GameRoom {
     broadcastState() {
         const playersData = [];
         for (const p of this.players.values()) {
+            let speed = this.config.baseSpeed;
+            if (this.state !== 'RACING') {
+                speed = 0;
+            } else {
+                if (p.status === 'stopped') speed = 0;
+                else if (p.status === 'spinning') speed = this.config.baseSpeed * 0.1;
+                else if (p.status === 'penalized') {
+                    const pCfg = this.config.penalties.types[p.effectType];
+                    speed = this.config.baseSpeed * (pCfg ? pCfg.speedMultiplier : 0.5);
+                } else if (p.status === 'rewarded') {
+                    speed = this.config.baseSpeed * (this.config.rewardSpeedMultiplier || 1.1);
+                }
+            }
+
             playersData.push({
                 id: p.id,
                 name: p.name,
@@ -457,7 +511,8 @@ class GameRoom {
                 colorName: p.colorName,
                 status: p.status,
                 effectType: p.effectType,
-                effectTimer: p.effectTimer
+                effectTimer: p.effectTimer,
+                speed: speed // Crucial for client-side interpolation
             });
         }
 
@@ -469,7 +524,8 @@ class GameRoom {
             nextQuestionIn: Math.max(0, this.questionCooldownTimer),
             questionsUsed: this.questionsUsed,
             maxQuestions: this.config.maxQuestions,
-            serverTime: Date.now()
+            serverTime: Date.now(),
+            seed: this.seed
         });
     }
 
