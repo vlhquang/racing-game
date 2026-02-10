@@ -367,7 +367,7 @@ const Renderer = (() => {
             Effects.drawEffectOverlay(ctx, width, height, myPlayer.status, myPlayer.effectType, time, config);
         }
 
-        HUD.draw(ctx, width, height, gameState, myId);
+        HUD.draw(ctx, width, height, gameState, myId, config);
         Effects.drawNotifications(ctx, width, height);
     }
 

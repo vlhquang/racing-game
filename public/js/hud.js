@@ -68,7 +68,7 @@ const HUD = (() => {
         ctx.restore();
     }
 
-    function drawMinimap(ctx, w, h, players, myId) {
+    function drawMinimap(ctx, w, h, players, myId, config) {
         ctx.save();
 
         const mapW = 36;
@@ -89,24 +89,42 @@ const HUD = (() => {
         ctx.roundRect(mapX, mapY, mapW, mapH, 8);
         ctx.stroke();
 
-        // Label
-        ctx.font = '600 8px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText('MAP', mapX + mapW / 2, mapY + 12);
+        // Start/Finish Lines (Visualization)
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.setLineDash([2, 2]);
+        // Finish Line (Top)
+        ctx.beginPath();
+        ctx.moveTo(mapX + 5, mapY + 25);
+        ctx.lineTo(mapX + mapW - 5, mapY + 25);
+        ctx.stroke();
+        // Start Line (Bottom)
+        ctx.beginPath();
+        ctx.moveTo(mapX + 5, mapY + mapH - 10);
+        ctx.lineTo(mapX + mapW - 5, mapY + mapH - 10);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-        // Find distance range
-        let minDist = Infinity, maxDist = -Infinity;
-        for (const p of players) {
-            if (p.distance < minDist) minDist = p.distance;
-            if (p.distance > maxDist) maxDist = p.distance;
-        }
-        const range = Math.max(maxDist - minDist, 500);
+        // Labels
+        ctx.font = '700 8px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f5c518';
+        ctx.fillText('FINISH', mapX + mapW / 2, mapY + 20);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('START', mapX + mapW / 2, mapY + mapH - 2);
+
+        // Fixed Scale Calculation
+        // Total distance is estimated based on base speed and race duration
+        // We add a small buffer for those who might go over (speed boosts)
+        const totalDist = (config ? (config.baseSpeed * config.raceDuration) : 36000) * 1.05;
+        const usableHeight = mapH - 45; // Subtract space for labels/lines
 
         // Draw player dots
         for (const p of players) {
-            const norm = (p.distance - minDist) / range;
-            const dotY = mapY + mapH - 20 - norm * (mapH - 40);
+            // Clamp progress between 0 and 1
+            const progress = Math.min(1, Math.max(0, p.distance / totalDist));
+
+            // dotY goes from mapY + mapH - 10 (START) to mapY + 25 (FINISH)
+            const dotY = (mapY + mapH - 10) - progress * usableHeight;
             const dotX = mapX + mapW / 2;
 
             // Dot
