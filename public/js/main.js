@@ -19,17 +19,13 @@
     let laneCount = 3;
     let config = {};
     let lastInputTime = 0;
+    let predictedLane = null;
 
     // Network event: countdown
     Network.on('onCountdown', (data) => {
         console.log('[Client] Game starting... showing game screen');
         laneCount = data.laneCount || 3;
         config = data.config || {};
-
-        // Client-side prediction state
-        let predictedLane = null;
-        lastInputTime = 0;
-        const PING_COMPENSATION = 300; // ms to ignore server state after input
 
         if (!gameStarted) {
             gameStarted = true;

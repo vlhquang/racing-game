@@ -131,6 +131,19 @@ body {
   transform: scale(0.96);
 }
 
+.btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+  position: relative;
+}
+
+.btn-loading::after {
+  content: '...';
+  position: absolute;
+  right: 15px;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-primary), #c0392b);
   color: white;
@@ -380,6 +393,12 @@ body {
 .answer-btn.wrong {
   border-color: var(--accent-primary);
   background: rgba(233, 69, 96, 0.3);
+}
+
+.answer-btn.locked {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 /* ============ RESULT OVERLAY ============ */

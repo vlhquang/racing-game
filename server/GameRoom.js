@@ -73,7 +73,7 @@ class GameRoom {
     }
 
     startGame() {
-        if (this.state !== 'WAITING' && this.state !== 'FINISHED') {
+        if (this.state !== 'WAITING') {
             console.log(`[GameRoom] Room ${this.roomCode}: Cannot start, state is ${this.state}`);
             return;
         }
@@ -89,6 +89,7 @@ class GameRoom {
             p.speed = this.config.baseSpeed;
             p.status = 'normal';
             p.effectTimer = 0;
+            p.effectType = null;
             i++;
         }
 
@@ -232,13 +233,20 @@ class GameRoom {
         }
 
         const selectedLanes = lanes.slice(0, numObstacles);
+        let questionSpawned = false;
+        const hasQuestionOnRoad = this.obstacles.some(o => o.type === 'question' && o.active);
+        const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
+            this.questionsUsed < this.config.maxQuestions &&
+            !hasQuestionOnRoad;
 
         for (const lane of selectedLanes) {
             let type;
             const rand = Math.random();
-            // Only spawn question if cooldown ready AND not maxed out
-            if (this.questionCooldownTimer <= 0 && this.questionsUsed < this.config.maxQuestions && rand < 0.08) {
+
+            // Force a question if ready and not yet spawned in this set
+            if (canSpawnQuestion && !questionSpawned) {
                 type = 'question';
+                questionSpawned = true;
             } else if (rand < 0.55) {
                 type = 'stone';
             } else {
@@ -309,20 +317,22 @@ class GameRoom {
         this.state = 'QUESTION';
         this.activeQuestion = question;
         this.questionAnswers.clear();
+        this.questionStartTime = Date.now();
 
         if (this.gameLoopInterval) {
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
         }
 
+        const timeLimit = question.timeLimit || this.config.questionTime;
         this.io.to(this.roomCode).emit('question-start', {
             triggeredBy,
             question: question.question,
             answers: question.answers,
-            timeLimit: question.timeLimit || this.config.questionTime
+            timeLimit
         });
 
-        const questionTimeLimit = (question.timeLimit || this.config.questionTime) * 1000;
+        const questionTimeLimit = timeLimit * 1000;
         this.questionTimer = setTimeout(() => {
             this.resolveQuestion();
         }, questionTimeLimit + 500);
@@ -330,7 +340,13 @@ class GameRoom {
 
     handleAnswer(playerId, answerIndex) {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
-        if (this.questionAnswers.has(playerId)) return;
+
+        const timeLimit = this.activeQuestion.timeLimit || this.config.questionTime;
+        const elapsed = (Date.now() - this.questionStartTime) / 1000;
+
+        // Lock answers in the last 2 seconds
+        if (elapsed > timeLimit - 2) return;
+
         this.questionAnswers.set(playerId, answerIndex);
     }
 
@@ -443,7 +459,10 @@ class GameRoom {
             players: playersData,
             obstacles: this.obstacles.filter(o => o.active),
             timeRemaining: Math.ceil(this.timeRemaining),
-            state: this.state
+            state: this.state,
+            nextQuestionIn: Math.max(0, this.questionCooldownTimer),
+            questionsUsed: this.questionsUsed,
+            maxQuestions: this.config.maxQuestions
         });
     }
 

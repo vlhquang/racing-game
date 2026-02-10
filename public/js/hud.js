@@ -13,6 +13,7 @@ const HUD = (() => {
         drawDistance(ctx, w, myPlayer.distance);
         drawMinimap(ctx, w, h, gameState.players, myId);
         drawStatusEffect(ctx, w, h, myPlayer);
+        drawNextQuestionTimer(ctx, w, h, gameState);
     }
 
     function drawTimer(ctx, w, timeRemaining) {
@@ -215,6 +216,44 @@ const HUD = (() => {
         if (status === 'spinning') return 1.5;
         if (status === 'rewarded') return 2;
         return 3; // penalized default
+    }
+
+    function drawNextQuestionTimer(ctx, w, h, gameState) {
+        if (gameState.state !== 'RACING') return;
+        if (gameState.questionsUsed >= gameState.maxQuestions) return;
+
+        ctx.save();
+
+        const qx = 20;
+        const qy = 120;
+        const qw = 40;
+        const qh = 40;
+
+        // Background circle
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath();
+        ctx.arc(qx + qw / 2, qy + qh / 2, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Icon "?"
+        ctx.font = '700 18px Outfit';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = gameState.nextQuestionIn <= 0 ? '#f5c518' : 'rgba(255,255,255,0.4)';
+        ctx.fillText('?', qx + qw / 2, qy + qh / 2);
+
+        // Circular progress / Timer text
+        if (gameState.nextQuestionIn > 0) {
+            ctx.font = '600 12px Inter';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(`${Math.ceil(gameState.nextQuestionIn)}s`, qx + qw / 2, qy + qh + 8);
+        } else {
+            ctx.font = '700 11px Inter';
+            ctx.fillStyle = '#f5c518';
+            ctx.fillText('READY', qx + qw / 2, qy + qh + 8);
+        }
+
+        ctx.restore();
     }
 
     return { draw };

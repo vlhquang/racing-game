@@ -22,6 +22,19 @@ const UI = (() => {
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
 
+        function setLoading(btn, isLoading, loadingText = 'Đang xử lý...') {
+            if (isLoading) {
+                btn.dataset.originalText = btn.textContent;
+                btn.textContent = loadingText;
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+            } else {
+                btn.textContent = btn.dataset.originalText || btn.textContent;
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+
         // Create room
         btnCreate.addEventListener('click', () => {
             const name = playerNameInput.value.trim();
@@ -29,6 +42,7 @@ const UI = (() => {
                 showError('Vui lòng nhập tên!');
                 return;
             }
+            setLoading(btnCreate, true);
             Network.createRoom(name);
         });
 
@@ -38,6 +52,7 @@ const UI = (() => {
             const code = roomCodeInput.value.trim().toUpperCase();
             if (!name) { showError('Vui lòng nhập tên!'); return; }
             if (!code || code.length < 4) { showError('Mã phòng không hợp lệ!'); return; }
+            setLoading(btnJoin, true);
             Network.joinRoom(code, name);
         });
 
@@ -54,6 +69,7 @@ const UI = (() => {
 
         // Start game
         btnStart.addEventListener('click', () => {
+            setLoading(btnStart, true);
             Network.startGame(currentRoomCode);
         });
 
@@ -76,34 +92,21 @@ const UI = (() => {
 
         // Play again
         btnPlayAgain.addEventListener('click', () => {
-            // Instead of reload, go back to lobby room
-            document.getElementById('results-screen').classList.remove('active');
-            document.getElementById('results-screen').classList.add('hidden');
-
-            document.getElementById('lobby-screen').classList.remove('hidden');
-            document.getElementById('lobby-screen').classList.add('active');
-
-            document.getElementById('lobby-menu').classList.add('hidden');
-            document.getElementById('lobby-room').classList.remove('hidden');
-
-            // If host, show start button, else show waiting msg
-            if (isHost) {
-                document.getElementById('btn-start').classList.remove('hidden');
-                document.getElementById('waiting-msg').classList.add('hidden');
-            } else {
-                document.getElementById('btn-start').classList.add('hidden');
-                document.getElementById('waiting-msg').classList.remove('hidden');
-            }
+            location.reload();
         });
 
         function showError(msg) {
             errorMsg.textContent = msg;
             errorMsg.classList.remove('hidden');
+            setLoading(btnCreate, false);
+            setLoading(btnJoin, false);
+            setLoading(btnStart, false);
             setTimeout(() => errorMsg.classList.add('hidden'), 3000);
         }
 
         // Network callbacks
         Network.on('onRoomCreated', (data) => {
+            setLoading(btnCreate, false);
             currentRoomCode = data.roomCode;
             myPlayerId = data.playerId;
             isHost = true;
@@ -116,6 +119,7 @@ const UI = (() => {
         });
 
         Network.on('onRoomJoined', (data) => {
+            setLoading(btnJoin, false);
             currentRoomCode = data.roomCode;
             myPlayerId = data.playerId;
             isHost = false;
@@ -140,6 +144,7 @@ const UI = (() => {
         });
 
         Network.on('onCountdown', (data) => {
+            setLoading(btnStart, false);
             showGameScreen();
             showCountdown(data.count);
         });
@@ -226,23 +231,26 @@ const UI = (() => {
                 if (timeLeft < 3) {
                     timerText.style.color = '#e94560';
                 }
+                // LOCK answering when < 2s
+                if (timeLeft <= 2) {
+                    qAnswers.querySelectorAll('.answer-btn').forEach(b => {
+                        b.classList.add('locked');
+                        b.disabled = true;
+                    });
+                }
             } else {
                 timerText.textContent = "0.0s";
                 clearInterval(questionTimerInterval);
             }
         }, 1000 / 10);
 
-        let answered = false;
-
         data.answers.forEach((ans, i) => {
             const btn = document.createElement('button');
             btn.className = 'answer-btn';
             btn.textContent = ans;
             btn.addEventListener('click', () => {
-                if (answered) return;
-                answered = true;
-                // Mark selected
-                qAnswers.querySelectorAll('.answer-btn').forEach(b => b.style.pointerEvents = 'none');
+                // Remove previous selected
+                qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 Network.answerQuestion(currentRoomCode, i);
             });
