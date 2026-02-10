@@ -74,7 +74,7 @@ const Effects = (() => {
             ctx.fillText(n.text, canvasWidth / 2 + 2, canvasHeight * 0.35 + n.y + 2);
 
             ctx.fillStyle = n.color;
-            ctx.fillText(n.text, canvasWidth / 2, canvasHeight * 0.35 + n.y);
+            // ctx.fillText(n.text, canvasWidth / 2, canvasHeight * 0.35 + n.y);
         }
         ctx.globalAlpha = 1;
     }
