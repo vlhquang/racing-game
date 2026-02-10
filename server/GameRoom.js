@@ -24,6 +24,7 @@ class GameRoom {
         this.questionsUsed = 0;
         this.questionCooldownTimer = 0;
         this.questionManager = new QuestionManager();
+        this.lastBroadcastTime = 0;
     }
 
     addPlayer(socket, name) {
@@ -219,7 +220,12 @@ class GameRoom {
         const minDist = Math.min(...[...this.players.values()].map(p => p.distance)) - 500;
         this.obstacles = this.obstacles.filter(o => o.distance > minDist);
 
-        this.broadcastState();
+        // Broadcast every ~45ms (approx 22 times per second)
+        // This reduces bandwidth and jitter over TCP/ngrok
+        if (now - this.lastBroadcastTime >= 45) {
+            this.broadcastState();
+            this.lastBroadcastTime = now;
+        }
     }
 
     spawnObstacles(atDistance) {
@@ -462,7 +468,8 @@ class GameRoom {
             state: this.state,
             nextQuestionIn: Math.max(0, this.questionCooldownTimer),
             questionsUsed: this.questionsUsed,
-            maxQuestions: this.config.maxQuestions
+            maxQuestions: this.config.maxQuestions,
+            serverTime: Date.now()
         });
     }
 

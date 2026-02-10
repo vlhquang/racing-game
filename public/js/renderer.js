@@ -12,8 +12,7 @@ const Renderer = (() => {
 
     // Smooth distance tracking
     const displayDistances = new Map(); // id -> smoothed distance
-    const serverDistances = new Map();  // id -> raw server distance
-    const playerSpeeds = new Map();     // id -> current speed (for extrapolation)
+    const serverSnapshots = new Map();  // id -> { dist, time, speed }
 
     function init(canvasEl) {
         canvas = canvasEl;
@@ -53,17 +52,22 @@ const Renderer = (() => {
         gameState = state;
 
         if (gameState && gameState.players) {
+            const now = performance.now();
             for (const p of gameState.players) {
-                serverDistances.set(p.id, p.distance);
+                const prev = serverSnapshots.get(p.id);
 
-                // Track speed for extrapolation (default to base if not provided)
-                // Note: The server should really send 'currentSpeed' in gameState
-                // For now we assume they move at baseSpeed if not penalized/stopped
-                let speed = 200; // Base speed default
-                if (p.status === 'stopped') speed = 0;
-                else if (p.status === 'spinning') speed = 200 * 0.3; // config values
-                else if (p.status === 'penalized') speed = 200 * 0.6;
-                playerSpeeds.set(p.id, speed);
+                // If we have a previous snapshot, we can calculate a more accurate "network speed"
+                let networkSpeed = 200; // default fallout
+                if (p.status === 'stopped') networkSpeed = 0;
+                else if (p.status === 'spinning') networkSpeed = 60;
+                else if (p.status === 'penalized') networkSpeed = 120;
+                else if (p.status === 'rewarded') networkSpeed = 220;
+
+                serverSnapshots.set(p.id, {
+                    dist: p.distance,
+                    time: now,
+                    speed: networkSpeed
+                });
 
                 // Initialize display distance if new
                 if (!displayDistances.has(p.id)) {
@@ -120,20 +124,29 @@ const Renderer = (() => {
 
         // 1. Update smooth distances for all players
         const playerDistances = {};
+        const now = performance.now();
+
         for (const p of gameState.players) {
+            const snap = serverSnapshots.get(p.id);
             let current = displayDistances.get(p.id) || p.distance;
-            const target = serverDistances.get(p.id) || p.distance;
-            const speed = playerSpeeds.get(p.id) || 0;
 
-            // Extrapolate
-            current += speed * dt;
+            if (snap) {
+                // Prediction: where should the player be right now based on last server info?
+                const timeSinceLastPacket = (now - snap.time) / 1000;
+                const predictedServerDist = snap.dist + snap.speed * timeSinceLastPacket;
 
-            // Interpolate/Spring: pull towards server distance if they drift
-            const diff = target - current;
-            if (Math.abs(diff) > 200) {
-                current = target;
-            } else {
-                current += diff * 0.1;
+                // Smoothing: move current display distance towards predicted distance
+                const diff = predictedServerDist - current;
+
+                // If the error is massive (>300m), snap immediately to avoid sliding cars
+                if (Math.abs(diff) > 300) {
+                    current = predictedServerDist;
+                } else {
+                    // Smoothly interpolate. 
+                    // Factor depends on how much we want to favor server vs smoothness.
+                    // 0.15 is responsive enough but hides jitter well.
+                    current += diff * 0.15;
+                }
             }
 
             displayDistances.set(p.id, current);

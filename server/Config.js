@@ -1,7 +1,7 @@
 const CONFIG = {
     // Game Settings
     maxPlayers: 4,
-    raceDuration: 10,        // seconds
+    raceDuration: 120,        // seconds
     baseSpeed: 300,           // pixels/sec
     laneWidth: 80,            // pixels
 
