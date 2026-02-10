@@ -313,11 +313,12 @@ class GameRoom {
             this.gameLoopInterval = null;
         }
 
-        const timeLimit = question.timeLimit || this.config.questionTime;
+        const timeLimit = this.config.questionTime;
         this.io.to(this.roomCode).emit('question-start', {
             triggeredBy,
             question: question.question,
             answers: question.answers,
+            imageUrl: question.imageUrl,
             timeLimit
         });
 
@@ -326,12 +327,12 @@ class GameRoom {
         const questionTimeLimit = timeLimit * 1000;
         this.questionTimer = setTimeout(() => {
             this.resolveQuestion();
-        }, questionTimeLimit + 500);
+        }); // 12s base + 13s slack for image loading
     }
 
     handleAnswer(playerId, answerIndex) {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
-        const timeLimit = this.activeQuestion.timeLimit || this.config.questionTime;
+        const timeLimit = this.config.questionTime;
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
         if (elapsed > timeLimit - 2) return;
         this.questionAnswers.set(playerId, answerIndex);

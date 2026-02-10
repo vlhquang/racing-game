@@ -8,8 +8,7 @@
             "3",
             "4"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 2,
@@ -20,8 +19,7 @@
             "6",
             "7"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 3,
@@ -32,8 +30,7 @@
             "4",
             "5"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 4,
@@ -44,8 +41,7 @@
             "9",
             "10"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 5,
@@ -56,8 +52,7 @@
             "7",
             "4"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 6,
@@ -68,8 +63,7 @@
             "10",
             "11"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 7,
@@ -80,8 +74,7 @@
             "3",
             "0"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 8,
@@ -92,8 +85,7 @@
             "10",
             "7"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 9,
@@ -104,8 +96,7 @@
             "4",
             "1"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 10,
@@ -116,8 +107,7 @@
             "4",
             "5"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 11,
@@ -128,8 +118,7 @@
             "11",
             "12"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 12,
@@ -140,8 +129,7 @@
             "2",
             "3"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 13,
@@ -152,8 +140,7 @@
             "10",
             "11"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 14,
@@ -164,8 +151,7 @@
             "10",
             "7"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 15,
@@ -176,8 +162,7 @@
             "5",
             "6"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 16,
@@ -188,8 +173,7 @@
             "11",
             "0"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 17,
@@ -200,8 +184,7 @@
             "3",
             "4"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 18,
@@ -212,8 +195,7 @@
             "9",
             "6"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 19,
@@ -224,8 +206,7 @@
             "9",
             "6"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 20,
@@ -236,8 +217,7 @@
             "10",
             "7"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 21,
@@ -248,8 +228,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 22,
@@ -260,8 +239,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 23,
@@ -272,8 +250,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 24,
@@ -284,8 +261,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 25,
@@ -296,8 +272,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 26,
@@ -308,8 +283,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 27,
@@ -320,8 +294,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 28,
@@ -332,8 +305,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 29,
@@ -344,8 +316,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 30,
@@ -356,8 +327,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 31,
@@ -368,8 +338,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 32,
@@ -380,8 +349,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 33,
@@ -392,8 +360,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 34,
@@ -404,8 +371,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 35,
@@ -416,8 +382,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 36,
@@ -428,8 +393,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 37,
@@ -440,8 +404,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 38,
@@ -452,8 +415,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 39,
@@ -464,8 +426,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 40,
@@ -476,8 +437,7 @@
             "=",
             "Không biết"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 41,
@@ -488,8 +448,7 @@
             "21",
             "24"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 42,
@@ -500,8 +459,7 @@
             "9",
             "5"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 43,
@@ -512,8 +470,7 @@
             "35",
             "45"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 44,
@@ -524,8 +481,7 @@
             "8",
             "4"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 45,
@@ -536,8 +492,7 @@
             "65",
             "85"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 46,
@@ -548,8 +503,7 @@
             "45",
             "46"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 47,
@@ -560,8 +514,7 @@
             "40",
             "50"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 48,
@@ -572,8 +525,7 @@
             "34",
             "36"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 49,
@@ -584,8 +536,7 @@
             "13",
             "14"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 50,
@@ -596,8 +547,7 @@
             "13",
             "11"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 51,
@@ -608,8 +558,7 @@
             "30",
             "32"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 52,
@@ -620,8 +569,7 @@
             "18",
             "22"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 53,
@@ -632,8 +580,7 @@
             "33",
             "42"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 54,
@@ -644,8 +591,7 @@
             "11",
             "8"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 55,
@@ -656,8 +602,7 @@
             "20",
             "17"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 56,
@@ -668,8 +613,7 @@
             "45",
             "65"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 57,
@@ -680,8 +624,7 @@
             "42",
             "44"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 58,
@@ -692,8 +635,7 @@
             "19",
             "15"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 59,
@@ -704,8 +646,7 @@
             "38",
             "40"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 60,
@@ -716,8 +657,7 @@
             "12",
             "22"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 61,
@@ -728,8 +668,7 @@
             "Truyện chanh",
             "Chuyện chanh"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 62,
@@ -740,8 +679,7 @@
             "Sáng xủa",
             "Xáng sủa"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 63,
@@ -752,8 +690,7 @@
             "Ra đình",
             "Ja đình"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 64,
@@ -764,8 +701,7 @@
             "Trung thục",
             "Chung thục"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 65,
@@ -776,8 +712,7 @@
             "Để rành",
             "Để dạnh"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 66,
@@ -788,8 +723,7 @@
             "Giành dật",
             "Dành giật"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 67,
@@ -800,8 +734,7 @@
             "Che trở",
             "Tre chở"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 68,
@@ -812,8 +745,7 @@
             "Nghỉ nghơi",
             "Nghĩ nghơi"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 69,
@@ -824,8 +756,7 @@
             "Suối deo",
             "Xuối deo"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 70,
@@ -836,8 +767,7 @@
             "Giạng giỡ",
             "Rạng dỡ"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 71,
@@ -848,8 +778,7 @@
             "Con hiêu",
             "Con hươu"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 72,
@@ -860,8 +789,7 @@
             "Xanh sao",
             "Sanh xao"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 73,
@@ -872,8 +800,7 @@
             "Bánh chưng",
             "Bánh trưng"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 74,
@@ -884,8 +811,7 @@
             "Cây tre",
             "Cây che"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 75,
@@ -896,8 +822,7 @@
             "Giúp dỡ",
             "Dúp dỡ"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 76,
@@ -908,8 +833,7 @@
             "Vui vẻ",
             "Vui sẻ"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 77,
@@ -920,8 +844,7 @@
             "Suất sức",
             "Xuất sức"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 78,
@@ -932,8 +855,7 @@
             "Trân trọng",
             "Chân trọng"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 79,
@@ -944,8 +866,7 @@
             "Sơn chà",
             "Xơn chà"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 80,
@@ -956,8 +877,7 @@
             "Hoa phượng",
             "Hoa phuợng"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 81,
@@ -969,8 +889,7 @@
             "Orange",
             "Grape"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 82,
@@ -982,8 +901,7 @@
             "Bird",
             "Fish"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 83,
@@ -995,8 +913,7 @@
             "Mouse",
             "Lion"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 84,
@@ -1008,8 +925,7 @@
             "Banana",
             "Mango"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 85,
@@ -1021,8 +937,7 @@
             "Car",
             "Plane"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 86,
@@ -1034,8 +949,7 @@
             "Train",
             "Plane"
         ],
-        "correctIndex": 3,
-        "timeLimit": 7
+        "correctIndex": 3
     },
     {
         "id": 87,
@@ -1047,8 +961,7 @@
             "Sun",
             "Cloud"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 88,
@@ -1060,8 +973,7 @@
             "Earth",
             "Mars"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 89,
@@ -1073,8 +985,7 @@
             "Crab",
             "Shark"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 90,
@@ -1086,8 +997,7 @@
             "Bee",
             "Owl"
         ],
-        "correctIndex": 0,
-        "timeLimit": 7
+        "correctIndex": 0
     },
     {
         "id": 91,
@@ -1099,8 +1009,7 @@
             "Berry",
             "Peach"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 92,
@@ -1112,8 +1021,7 @@
             "Pumpkin",
             "Grape"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 93,
@@ -1125,8 +1033,7 @@
             "Elephant",
             "Giraffe"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 94,
@@ -1138,8 +1045,7 @@
             "Cat",
             "Dog"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 95,
@@ -1151,8 +1057,7 @@
             "Bike",
             "Train"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 96,
@@ -1164,8 +1069,7 @@
             "Truck",
             "Taxi"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 97,
@@ -1177,8 +1081,7 @@
             "Eraser",
             "Ruler"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     },
     {
         "id": 98,
@@ -1190,8 +1093,7 @@
             "Book",
             "Pen"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 99,
@@ -1203,8 +1105,7 @@
             "Umbrella",
             "Boot"
         ],
-        "correctIndex": 2,
-        "timeLimit": 7
+        "correctIndex": 2
     },
     {
         "id": 100,
@@ -1216,7 +1117,6 @@
             "Tennis",
             "Golf"
         ],
-        "correctIndex": 1,
-        "timeLimit": 7
+        "correctIndex": 1
     }
 ]
