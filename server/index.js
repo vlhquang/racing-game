@@ -11,7 +11,26 @@ const io = new Server(server, {
 });
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '..', 'public')));
+const publicPath = path.join(__dirname, '..', 'public');
+console.log('Serving static files from:', publicPath);
+const fs = require('fs');
+
+// Check if directory exists
+if (fs.existsSync(publicPath)) {
+    console.log('Public directory exists. Contents:', fs.readdirSync(publicPath));
+    const cssPath = path.join(publicPath, 'css');
+    if (fs.existsSync(cssPath)) {
+        console.log('CSS directory contents:', fs.readdirSync(cssPath));
+    } else {
+        console.log('CSS directory NOT found at:', cssPath);
+    }
+} else {
+    console.log('Public directory NOT found at:', publicPath);
+    // Fallback: try current directory?
+    console.log('Current directory contents:', fs.readdirSync(process.cwd()));
+}
+
+app.use(express.static(publicPath));
 
 // Store active rooms
 const rooms = new Map();
