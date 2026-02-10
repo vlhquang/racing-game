@@ -20,6 +20,9 @@ const Effects = (() => {
     }
 
     function addNotification(text, color, duration) {
+        // Only show the newest: clear existing notifications
+        notifications.length = 0;
+
         notifications.push({
             text,
             color: color || '#fff',
@@ -74,7 +77,7 @@ const Effects = (() => {
             ctx.fillText(n.text, canvasWidth / 2 + 2, canvasHeight * 0.35 + n.y + 2);
 
             ctx.fillStyle = n.color;
-            // ctx.fillText(n.text, canvasWidth / 2, canvasHeight * 0.35 + n.y);
+            ctx.fillText(n.text, canvasWidth / 2, canvasHeight * 0.35 + n.y);
         }
         ctx.globalAlpha = 1;
     }
