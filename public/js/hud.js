@@ -159,31 +159,17 @@ const HUD = (() => {
         ctx.fill();
 
         ctx.font = '700 16px Outfit';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, w / 2, bgY + bgH / 2);
 
+        // Timer bar
         if (player.effectTimer > 0) {
-            // Adjust label position to left
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(label, bgX + 12, bgY + bgH / 2);
-
-            // Timer bar
             const maxTime = getMaxTime(player.status, player.effectType);
             const ratio = Math.min(1, player.effectTimer / maxTime);
             ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.fillRect(bgX + 4, bgY + bgH - 6, (bgW - 8) * ratio, 3);
-
-            // Draw numerical timer
-            const timeLeft = Math.ceil(player.effectTimer * 10) / 10;
-            ctx.font = '600 14px Outfit';
-            ctx.textAlign = 'right';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(`${timeLeft}s`, bgX + bgW - 8, bgY + bgH / 2);
-        } else {
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(label, w / 2, bgY + bgH / 2);
         }
 
         ctx.restore();
