@@ -147,6 +147,11 @@ body {
   box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);
 }
 
+.btn-sm {
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
 .divider {
   display: flex;
   align-items: center;

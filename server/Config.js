@@ -1,7 +1,7 @@
 const CONFIG = {
     // Game Settings
     maxPlayers: 4,
-    raceDuration: 90,        // seconds
+    raceDuration: 10,        // seconds
     baseSpeed: 300,           // pixels/sec
     laneWidth: 80,            // pixels
 
@@ -10,6 +10,7 @@ const CONFIG = {
     oilSpinTime: 1.5,           // seconds
     obstacleSpawnInterval: 0.8, // default spawn interval
     minObstacleGap: 200,        // min distance between obstacles
+    initialObstacleDelay: 3.0,  // seconds before first obstacles appear
 
     // Questions
     questionTime: 7,          // seconds to answer

@@ -57,9 +57,43 @@ const UI = (() => {
             Network.startGame(currentRoomCode);
         });
 
+        // Copy Link
+        const btnCopyLink = document.getElementById('btn-copy-link');
+        btnCopyLink.addEventListener('click', () => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', currentRoomCode);
+
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                const originalText = btnCopyLink.textContent;
+                btnCopyLink.textContent = '✅ Đã sao chép!';
+                btnCopyLink.classList.replace('btn-secondary', 'btn-primary');
+                setTimeout(() => {
+                    btnCopyLink.textContent = originalText;
+                    btnCopyLink.classList.replace('btn-primary', 'btn-secondary');
+                }, 2000);
+            });
+        });
+
         // Play again
         btnPlayAgain.addEventListener('click', () => {
-            window.location.reload();
+            // Instead of reload, go back to lobby room
+            document.getElementById('results-screen').classList.remove('active');
+            document.getElementById('results-screen').classList.add('hidden');
+
+            document.getElementById('lobby-screen').classList.remove('hidden');
+            document.getElementById('lobby-screen').classList.add('active');
+
+            document.getElementById('lobby-menu').classList.add('hidden');
+            document.getElementById('lobby-room').classList.remove('hidden');
+
+            // If host, show start button, else show waiting msg
+            if (isHost) {
+                document.getElementById('btn-start').classList.remove('hidden');
+                document.getElementById('waiting-msg').classList.add('hidden');
+            } else {
+                document.getElementById('btn-start').classList.add('hidden');
+                document.getElementById('waiting-msg').classList.remove('hidden');
+            }
         });
 
         function showError(msg) {
@@ -113,6 +147,13 @@ const UI = (() => {
         Network.on('onGameOver', (data) => {
             showResults(data.rankings);
         });
+
+        // Auto-fill room from URL
+        const params = new URLSearchParams(window.location.search);
+        const roomFromUrl = params.get('room');
+        if (roomFromUrl) {
+            roomCodeInput.value = roomFromUrl.toUpperCase();
+        }
     }
 
     function updatePlayerList(players) {

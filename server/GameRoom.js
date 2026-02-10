@@ -73,7 +73,7 @@ class GameRoom {
     }
 
     startGame() {
-        if (this.state !== 'WAITING') {
+        if (this.state !== 'WAITING' && this.state !== 'FINISHED') {
             console.log(`[GameRoom] Room ${this.roomCode}: Cannot start, state is ${this.state}`);
             return;
         }
@@ -112,7 +112,12 @@ class GameRoom {
         this.timeRemaining = this.config.raceDuration;
         this.lastTick = Date.now();
         this.obstacles = [];
-        this.nextObstacleDistance = 400;
+
+        // Calculate distance for 3s delay (e.g. 300 speed * 3s = 900 distance)
+        // Spawn distance is checked as maxDistance >= nextObstacleDistance - 600
+        const initialDelayDist = this.config.baseSpeed * (this.config.initialObstacleDelay || 3);
+        this.nextObstacleDistance = initialDelayDist + 600;
+
         this.questionsUsed = 0;
 
         // Random initial cooldown between 10-15s
