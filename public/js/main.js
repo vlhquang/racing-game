@@ -55,7 +55,7 @@
         // Block input if paralyzed
         const myId = UI.getPlayerId();
         const me = state.players.find(p => p.id === myId);
-        if (me && (me.status === 'stopped' || me.status === 'spinning')) {
+        if (me && me.status === 'stopped') {
             return;
         }
 

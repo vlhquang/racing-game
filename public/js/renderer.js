@@ -16,6 +16,7 @@ const Renderer = (() => {
     // Smooth distance tracking
     const displayDistances = new Map(); // id -> smoothed distance
     const serverSnapshots = new Map();  // id -> { dist, time, speed }
+    let localDistance = 0;              // Persistent local distance to prevent jitter
 
     function init(canvasEl) {
         canvas = canvasEl;
@@ -73,6 +74,7 @@ const Renderer = (() => {
                 // Initialize display distance if new
                 if (!displayDistances.has(p.id)) {
                     displayDistances.set(p.id, p.distance);
+                    if (p.id === myId) localDistance = p.distance;
                 }
             }
         }
@@ -150,12 +152,12 @@ const Renderer = (() => {
                     const type = (typeRand < 0.6) ? 'stone' : 'oil';
 
                     // Check if already deactivated on server
-                    const isDeactivated = gameState.obstacles && gameState.obstacles.some(o =>
-                        o.distance === d && o.lane === lane && !o.active
-                    );
+                    const obsId = `obs_${Math.floor(d)}_${lane}`;
+                    const isDeactivated = gameState.inactiveDeterministicIds &&
+                        gameState.inactiveDeterministicIds.includes(obsId);
 
                     if (!isDeactivated) {
-                        onHitCallback({ type, lane, distance: d });
+                        onHitCallback({ type, lane, distance: d, id: obsId });
                     }
                 }
             }
@@ -204,20 +206,33 @@ const Renderer = (() => {
                 const predictedServerDist = snap.dist + snap.speed * timeSinceLastPacket;
 
                 // Smoothing: move current display distance towards predicted distance
-                const diff = predictedServerDist - current;
-
-                // For the LOCAL player, we want to be very responsive to match server collision checks
-                // For REMOTE players, we want to be smooth to hide network jitter.
                 const isLocal = (p.id === myId);
-                const smoothingFactor = isLocal ? 0.8 : 0.15;
 
-                // If captured during a QUESTION phase, snap immediately to avoid drift
-                if (gameState.state !== 'RACING') {
-                    current = snap.dist; // Force snap to server distance
-                } else if (Math.abs(diff) > 300) {
-                    current = predictedServerDist; // Snap if too far
+                if (isLocal) {
+                    // LOCAL PLAYER: Move smoothly locally, then nudge towards server
+                    localDistance += snap.speed * dt;
+
+                    const diff = predictedServerDist - localDistance;
+
+                    if (gameState.state !== 'RACING') {
+                        localDistance = snap.dist;
+                    } else if (Math.abs(diff) > 300) {
+                        localDistance = predictedServerDist; // Hard snap if too far
+                    } else {
+                        // Very subtle nudge to stay in sync with server without jitter
+                        localDistance += diff * 0.05;
+                    }
+                    current = localDistance;
                 } else {
-                    current += diff * smoothingFactor;
+                    // REMOTE PLAYERS: Standard interpolation
+                    const diff = predictedServerDist - current;
+                    if (gameState.state !== 'RACING') {
+                        current = snap.dist;
+                    } else if (Math.abs(diff) > 300) {
+                        current = predictedServerDist;
+                    } else {
+                        current += diff * 0.15;
+                    }
                 }
             }
 
@@ -274,10 +289,10 @@ const Renderer = (() => {
                     const typeRand = getSeedRandom(d + lane + 555);
                     const type = (typeRand < 0.6) ? 'stone' : 'oil';
 
-                    // Check if hit
-                    const isHit = gameState.obstacles && gameState.obstacles.some(o =>
-                        o.distance === d && o.lane === lane && !o.active
-                    );
+                    // Check if hit (using the new array of IDs)
+                    const obsId = `obs_${Math.floor(d)}_${lane}`;
+                    const isHit = gameState.inactiveDeterministicIds &&
+                        gameState.inactiveDeterministicIds.includes(obsId);
 
                     if (!isHit) {
                         const relDist = d - mySmoothDist;

@@ -25,6 +25,7 @@ class GameRoom {
         this.questionCooldownTimer = 0;
         this.questionManager = new QuestionManager();
         this.lastBroadcastTime = 0;
+        this.inactiveDeterministicIds = new Set();
     }
 
     addPlayer(socket, name) {
@@ -115,15 +116,13 @@ class GameRoom {
         this.timeRemaining = this.config.raceDuration;
         this.lastTick = Date.now();
         this.obstacles = [];
+        this.inactiveDeterministicIds.clear();
 
-        // Calculate distance for 3s delay (e.g. 300 speed * 3s = 900 distance)
-        // Spawn distance is checked as maxDistance >= nextObstacleDistance - 600
         const initialDelayDist = this.config.baseSpeed * (this.config.initialObstacleDelay || 3);
         this.nextObstacleDistance = initialDelayDist + 600;
 
         this.questionsUsed = 0;
 
-        // Random initial cooldown between 10-15s
         this.questionCooldownTimer = this.config.questionIntervalMin +
             Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
 
@@ -136,7 +135,6 @@ class GameRoom {
         this.lastTick = now;
 
         if (this.state === 'RACING') {
-
             this.timeRemaining -= dt;
             if (this.timeRemaining <= 0) {
                 this.timeRemaining = 0;
@@ -154,12 +152,12 @@ class GameRoom {
             }
 
             if (maxDistance >= this.nextObstacleDistance - 600) {
-                this.spawnObstacles(this.nextObstacleDistance);
-                this.nextObstacleDistance += 300; // Deterministic step
+                // We only spawn Questions now, Deterministic items are handled by client
+                this.spawnQuestionsOnly(this.nextObstacleDistance);
+                this.nextObstacleDistance += 300;
             }
 
             for (const p of this.players.values()) {
-                // 1. Handle effects expiration
                 if (p.effectTimer > 0) {
                     p.effectTimer -= dt;
                     if (p.effectTimer <= 0) {
@@ -170,65 +168,27 @@ class GameRoom {
                     }
                 }
 
-                // 2. Apply movement based on status/penalty
                 let moveSpeed = p.speed;
-
                 if (p.status === 'stopped') {
                     moveSpeed = 0;
                 } else if (p.status === 'spinning') {
                     moveSpeed = p.speed * this.config.penalties.types.spin.speedMultiplier;
                 } else if (p.status === 'penalized') {
-                    // Apply penalty speed multipliers
                     const pConfig = this.config.penalties.types[p.effectType];
-                    if (pConfig) {
-                        moveSpeed = p.speed * pConfig.speedMultiplier;
-                    }
+                    if (pConfig) moveSpeed = p.speed * pConfig.speedMultiplier;
                 } else if (p.status === 'rewarded') {
-                    // Shield/Invincible: Apply reward speed boost
                     moveSpeed = p.speed * (this.config.rewardSpeedMultiplier || 1.1);
                 }
 
                 p.distance += moveSpeed * dt;
-
-                // 3. Collision Logic
-                // "rewarded" = Invincible Shield -> NO collisions allowed
-                if (p.status !== 'rewarded') {
-                    // Check obstacle collisions
-                    for (const obs of this.obstacles) {
-                        if (obs.active && obs.lane === p.lane &&
-                            Math.abs(p.distance - obs.distance) < 40) {
-
-                            // Special rule: BLUR penalty still allows collisions!
-                            // Other penalties might also allow collision if they don't stop movement
-                            // But if player is 'stopped' or 'spinning', they usually can't hit another? 
-                            // Actually 'spinning' moves slowly, so could hit. 'stopped' is stationary.
-
-                            // Prevent multi-hit if already stopped/spinning (unless it's a question)
-                            const isDisabled = (p.status === 'stopped' || p.status === 'spinning');
-
-                            // If Disabled, likely shouldn't trigger new stone/oil, 
-                            // BUT if it's a Question, maybe? 
-                            // Let's keep it simple: if disabled, ignore collisions to avoid lock-lock.
-                            if (isDisabled && obs.type !== 'question') continue;
-
-                            obs.active = false;
-                            this.handleObstacleHit(p, obs);
-                        }
-                    }
-                }
             }
 
             const minDist = Math.min(...[...this.players.values()].map(p => p.distance)) - 500;
-            const previousObstacleCount = this.obstacles.length;
             this.obstacles = this.obstacles.filter(o => o.distance > minDist);
-
-            // If an active question was missed, reset the state (so next one can spawn)
-            // Note: we don't necessarily reset the cooldown here if we want a fixed interval
         }
 
-        // Broadcast every ~45ms (approx 22 times per second)
-        // This reduces bandwidth and jitter over TCP/ngrok
-        if (now - this.lastBroadcastTime >= 45) {
+        // Broadcast more frequently (30ms = ~33Hz) for smoother road
+        if (now - this.lastBroadcastTime >= 30) {
             this.broadcastState();
             this.lastBroadcastTime = now;
         }
@@ -241,47 +201,15 @@ class GameRoom {
         return (s & 0x7fffffff) / 0x7fffffff;
     }
 
-    spawnObstacles(atDistance) {
+    spawnQuestionsOnly(atDistance) {
         const laneCount = this.getLaneCount();
-
-        // 1. Regular Deterministic Obstacles (Stone/Oil) - Row-based logic
-        // We use the same count/shuffle logic as before, but deterministically.
-        const numRand = this.getSeedRandom(atDistance + 789);
-        const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
-
-        const lanes = [];
-        for (let i = 0; i < laneCount; i++) lanes.push(i);
-
-        // Deterministic shuffle using seeds
-        for (let i = lanes.length - 1; i > 0; i--) {
-            const jRand = this.getSeedRandom(atDistance + i + 999);
-            const j = Math.floor(jRand * (i + 1));
-            [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
-        }
-
-        const selectedLanes = lanes.slice(0, numObstacles);
-
-        for (const lane of selectedLanes) {
-            const typeRand = this.getSeedRandom(atDistance + lane + 555);
-            const type = (typeRand < 0.6) ? 'stone' : 'oil';
-
-            this.obstacles.push({
-                id: `obs_${Math.floor(atDistance)}_${lane}`,
-                type,
-                lane,
-                distance: atDistance,
-                active: true
-            });
-        }
-
-        // 2. Question Spawning (Server Authoritative)
         const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
             this.questionsUsed < this.config.maxQuestions &&
             !this.obstacles.some(o => o.type === 'question' && o.active);
 
         if (canSpawnQuestion) {
             const spawnRand = Math.random();
-            if (spawnRand < 0.4) { // 40% chance if ready
+            if (spawnRand < 0.4) {
                 const lane = Math.floor(Math.random() * laneCount);
                 this.obstacles.push({
                     id: 'q_' + Math.random().toString(36).substr(2, 5),
@@ -291,52 +219,76 @@ class GameRoom {
                     active: true
                 });
 
-                // Reset cooldown AS SOON AS it spawns on the road
                 this.questionCooldownTimer = this.config.questionIntervalMin +
                     Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
 
-                console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned. Next cooldown: ${Math.floor(this.questionCooldownTimer)}s`);
+                console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned.`);
             }
         }
     }
 
     onObstacleHit(playerId, obstacleData) {
-        // If player is penalized, they CAN hit obstacles (stone/oil/question)
-        // EXCEPT if the penalty is "stop" or "spin" (handled in tick loop check)
+        if (this.state !== 'RACING') return;
+        const player = this.players.get(playerId);
+        if (!player || player.status === 'rewarded') return;
 
-        switch (obstacle.type) {
-            case 'stone':
-                player.status = 'stopped';
-                player.effectTimer = this.config.stoneStopTime;
-                this.io.to(this.roomCode).emit('obstacle-hit', {
-                    playerId: player.id,
-                    type: 'stone',
-                    duration: this.config.stoneStopTime
-                });
-                break;
+        // 1. Handle Questions (Server Authoritative)
+        if (obstacleData.type === 'question') {
+            const obs = this.obstacles.find(o => o.id === obstacleData.id && o.active);
+            if (obs) {
+                obs.active = false;
+                if (player.status !== 'penalized') {
+                    this.triggerQuestion(player.id);
+                }
+            }
+            return;
+        }
 
-            case 'oil':
-                player.status = 'spinning';
-                player.effectTimer = this.config.oilSpinTime;
-                this.io.to(this.roomCode).emit('obstacle-hit', {
-                    playerId: player.id,
-                    type: 'oil',
-                    duration: this.config.oilSpinTime
-                });
-                break;
+        // 2. Handle Deterministic Obstacles (Stone/Oil) - Verify on Server
+        const d = obstacleData.distance;
+        const lane = obstacleData.lane;
+        const obsId = obstacleData.id || `obs_${Math.floor(d)}_${lane}`;
 
-            case 'question':
-                // Check if anyone is penalized. Rule: "Trong thời gian bị phạt không hiển thị câu hỏi"
-                // Meaning: if THIS player is penalized, do they NOT trigger it? 
-                // Or if ANYONE is penalized? usually question pauses game for EVERYONE.
-                // Interpretation: If the player hitting the box is currently penalized, ignore it?
-                // OR: If the global state implies penalties are active?
+        if (this.inactiveDeterministicIds.has(obsId)) return;
 
-                // Let's implement: If the player hitting the box is penalized, they cannot trigger the question.
-                if (player.status === 'penalized') return;
+        // VERIFY: Did this obstacle actually exist?
+        const laneCount = this.getLaneCount();
+        const numRand = this.getSeedRandom(d + 789);
+        const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
 
-                this.triggerQuestion(player.id);
-                break;
+        const lanes = [];
+        for (let i = 0; i < laneCount; i++) lanes.push(i);
+        for (let i = lanes.length - 1; i > 0; i--) {
+            const jRand = this.getSeedRandom(d + i + 999);
+            const j = Math.floor(jRand * (i + 1));
+            [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+        }
+
+        const selectedLanes = lanes.slice(0, numObstacles);
+        if (!selectedLanes.includes(lane)) {
+            console.log(`[GameRoom] REJECTED hit: No obstacle at ${d}, lane ${lane}`);
+            return;
+        }
+
+        // Valid hit
+        this.inactiveDeterministicIds.add(obsId);
+
+        if (obstacleData.type === 'stone') {
+            player.status = 'stopped';
+            player.effectTimer = this.config.stoneStopTime;
+            this.io.to(this.roomCode).emit('obstacle-hit', {
+                playerId: player.id,
+                type: 'stone',
+                duration: this.config.stoneStopTime
+            });
+        } else if (obstacleData.type === 'oil') {
+            player.status = 'spinning';
+            player.effectTimer = this.config.oilSpinTime;
+            this.io.to(this.roomCode).emit('obstacle-hit', {
+                playerId: player.id,
+                type: 'oil',
+                duration: this.config.oilSpinTime
+            });
         }
     }
 
@@ -344,7 +296,6 @@ class GameRoom {
         if (this.state !== 'RACING') return;
         this.questionsUsed++;
 
-        // Set next random cooldown between 10-15s
         this.questionCooldownTimer = this.config.questionIntervalMin +
             Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
 
@@ -369,7 +320,6 @@ class GameRoom {
             timeLimit
         });
 
-        // IMMEDIATELY broadcast state so everyone stops
         this.broadcastState();
 
         const questionTimeLimit = timeLimit * 1000;
@@ -380,13 +330,9 @@ class GameRoom {
 
     handleAnswer(playerId, answerIndex) {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
-
         const timeLimit = this.activeQuestion.timeLimit || this.config.questionTime;
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
-
-        // Lock answers in the last 2 seconds
         if (elapsed > timeLimit - 2) return;
-
         this.questionAnswers.set(playerId, answerIndex);
     }
 
@@ -401,28 +347,21 @@ class GameRoom {
             let duration = 0;
 
             if (answer === undefined) {
-                // No Answer
-                penalty = this.getRandomPenalty(true); // true = noAnswer
+                penalty = this.getRandomPenalty(true);
                 const pConfig = this.config.penalties.types[penalty];
                 duration = pConfig.duration * this.config.penalties.noAnswer.durationMultiplier;
-
                 p.status = 'penalized';
                 p.effectType = penalty;
                 p.effectTimer = duration;
-
             } else if (answer === this.activeQuestion.correctIndex) {
-                // Correct
                 correct = true;
                 duration = this.config.correctRewardTime;
-                p.status = 'rewarded'; // Invincible Shield!
+                p.status = 'rewarded';
                 p.effectTimer = duration;
-
             } else {
-                // Wrong Answer
-                penalty = this.getRandomPenalty(false); // false = wrongAnswer
+                penalty = this.getRandomPenalty(false);
                 const pConfig = this.config.penalties.types[penalty];
                 duration = pConfig.duration * this.config.penalties.wrongAnswer.durationMultiplier;
-
                 p.status = 'penalized';
                 p.effectType = penalty;
                 p.effectTimer = duration;
@@ -439,10 +378,7 @@ class GameRoom {
         }
 
         this.io.to(this.roomCode).emit('question-result', { results, correctIndex: this.activeQuestion.correctIndex });
-
-        // Broadcast the new rewarded/penalized statuses immediately
         this.broadcastState();
-
         this.activeQuestion = null;
         this.questionAnswers.clear();
 
@@ -451,8 +387,6 @@ class GameRoom {
                 this.state = 'RACING';
                 this.lastTick = Date.now();
                 this.gameLoopInterval = setInterval(() => this.tick(), 16);
-
-                // Immediate sync on resume
                 this.broadcastState();
                 this.io.to(this.roomCode).emit('race-resume');
             }
@@ -468,14 +402,11 @@ class GameRoom {
 
     handleInput(playerId, direction) {
         const player = this.players.get(playerId);
-        if (!player) return;
-        if (this.state !== 'RACING') return;
-
-        if (player.status === 'stopped' || player.status === 'spinning') return;
+        if (!player || this.state !== 'RACING') return;
+        // Only block if stopped (oil allows movement now)
+        if (player.status === 'stopped') return;
 
         const laneCount = this.getLaneCount();
-
-        // Reverse control logic
         if (player.status === 'penalized' && player.effectType === 'reverse') {
             if (direction === 'left' && player.lane < laneCount - 1) player.lane++;
             else if (direction === 'right' && player.lane > 0) player.lane--;
@@ -512,13 +443,14 @@ class GameRoom {
                 status: p.status,
                 effectType: p.effectType,
                 effectTimer: p.effectTimer,
-                speed: speed // Crucial for client-side interpolation
+                speed: speed
             });
         }
 
         this.io.to(this.roomCode).emit('game-state', {
             players: playersData,
-            obstacles: this.obstacles.filter(o => o.active),
+            obstacles: this.obstacles.filter(o => o.active), // Only questions here
+            inactiveDeterministicIds: Array.from(this.inactiveDeterministicIds),
             timeRemaining: Math.ceil(this.timeRemaining),
             state: this.state,
             nextQuestionIn: Math.max(0, this.questionCooldownTimer),

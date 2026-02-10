@@ -116,6 +116,7 @@ const UI = (() => {
             document.getElementById('btn-start').classList.remove('hidden');
             document.getElementById('waiting-msg').classList.add('hidden');
             updatePlayerList(data.players);
+            updateQR(data.roomCode);
         });
 
         Network.on('onRoomJoined', (data) => {
@@ -129,6 +130,7 @@ const UI = (() => {
             document.getElementById('btn-start').classList.add('hidden');
             document.getElementById('waiting-msg').classList.remove('hidden');
             updatePlayerList(data.players);
+            updateQR(data.roomCode);
         });
 
         Network.on('onPlayerJoined', (data) => {
@@ -158,6 +160,9 @@ const UI = (() => {
         const roomFromUrl = params.get('room');
         if (roomFromUrl) {
             roomCodeInput.value = roomFromUrl.toUpperCase();
+            // Hide create options as per requirement
+            btnCreate.classList.add('hidden');
+            document.querySelector('.divider').classList.add('hidden');
         }
     }
 
@@ -174,6 +179,25 @@ const UI = (() => {
       `;
             list.appendChild(item);
         });
+    }
+
+    function updateQR(code) {
+        const qrContainer = document.getElementById('room-qr-container');
+        if (!qrContainer) return;
+
+        // Requirement: Only show for Host
+        if (!isHost) {
+            qrContainer.innerHTML = '';
+            qrContainer.classList.add('hidden');
+            return;
+        }
+
+        qrContainer.classList.remove('hidden');
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', code);
+
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url.toString())}`;
+        qrContainer.innerHTML = `<img src="${qrUrl}" alt="Mã QR tham gia phòng">`;
     }
 
     function showGameScreen() {
