@@ -242,6 +242,21 @@ const UI = (() => {
         qText.textContent = data.question;
         qAnswers.innerHTML = '';
 
+        // Handle image
+        const imgContainer = document.getElementById('question-image-container');
+        if (imgContainer) {
+            imgContainer.innerHTML = '';
+            if (data.imageUrl) {
+                const img = document.createElement('img');
+                img.src = data.imageUrl;
+                img.alt = 'Question image';
+                imgContainer.appendChild(img);
+                imgContainer.classList.remove('hidden');
+            } else {
+                imgContainer.classList.add('hidden');
+            }
+        }
+
         // Timer numerical countdown
         let timeLeft = data.timeLimit;
         timerText.textContent = `${timeLeft.toFixed(1)}s`;

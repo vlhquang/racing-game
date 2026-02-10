@@ -13,12 +13,12 @@ const CONFIG = {
     initialObstacleDelay: 3.0,  // seconds before first obstacles appear
 
     // Questions
-    questionTime: 7,          // seconds to answer
+    questionTime: 12,          // seconds to answer
     correctRewardTime: 2,     // seconds free movement (invincible)
     rewardSpeedMultiplier: 1.2, // 10% speed boost during reward
-    questionIntervalMin: 10,  // min seconds between questions
+    questionIntervalMin: 8,  // min seconds between questions
     questionIntervalMax: 15,  // max seconds between questions
-    maxQuestions: 5,           // per game
+    maxQuestions: 100,           // per game
 
     // Penalty Configuration
     penalties: {

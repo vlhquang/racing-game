@@ -113,6 +113,7 @@ class GameRoom {
     beginRace() {
         console.log(`[GameRoom] Room ${this.roomCode}: Race started!`);
         this.state = 'RACING';
+        this.questionManager.reset();
         this.timeRemaining = this.config.raceDuration;
         this.lastTick = Date.now();
         this.obstacles = [];
