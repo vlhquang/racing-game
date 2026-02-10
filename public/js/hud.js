@@ -162,7 +162,11 @@ const HUD = (() => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#fff';
-        ctx.fillText(label, w / 2, bgY + bgH / 2);
+        // Initial draw (will be overridden if there's a timer)
+        // Just prepare basic alignment
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
 
         // Timer bar
         if (player.effectTimer > 0) {

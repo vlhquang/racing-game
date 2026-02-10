@@ -176,8 +176,8 @@ class GameRoom {
                     moveSpeed = p.speed * pConfig.speedMultiplier;
                 }
             } else if (p.status === 'rewarded') {
-                // Shield/Invincible: Ensure full speed (or even boost if desired)
-                moveSpeed = p.speed;
+                // Shield/Invincible: Apply reward speed boost
+                moveSpeed = p.speed * (this.config.rewardSpeedMultiplier || 1.1);
             }
 
             p.distance += moveSpeed * dt;
