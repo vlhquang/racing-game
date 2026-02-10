@@ -1,0 +1,124 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const GameRoom = require('./GameRoom');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: { origin: '*' }
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Store active rooms
+const rooms = new Map();
+
+// Generate 4-character room code
+function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return rooms.has(code) ? generateRoomCode() : code;
+}
+
+io.on('connection', (socket) => {
+    console.log(`Player connected: ${socket.id}`);
+
+    socket.on('create-room', ({ playerName }) => {
+        const roomCode = generateRoomCode();
+        const room = new GameRoom(roomCode, io);
+        rooms.set(roomCode, room);
+        room.addPlayer(socket, playerName);
+        socket.join(roomCode);
+        socket.emit('room-created', {
+            roomCode,
+            playerId: socket.id,
+            players: room.getPlayersInfo()
+        });
+        console.log(`Room ${roomCode} created by ${playerName}`);
+    });
+
+    socket.on('join-room', ({ roomCode, playerName }) => {
+        const room = rooms.get(roomCode);
+        if (!room) {
+            socket.emit('error-msg', { message: 'Phòng không tồn tại!' });
+            return;
+        }
+        if (room.state !== 'WAITING') {
+            socket.emit('error-msg', { message: 'Trận đấu đã bắt đầu!' });
+            return;
+        }
+        if (room.getPlayerCount() >= room.config.maxPlayers) {
+            socket.emit('error-msg', { message: 'Phòng đã đầy!' });
+            return;
+        }
+        room.addPlayer(socket, playerName);
+        socket.join(roomCode);
+        socket.emit('room-joined', {
+            roomCode,
+            playerId: socket.id,
+            players: room.getPlayersInfo()
+        });
+        socket.to(roomCode).emit('player-joined', {
+            players: room.getPlayersInfo()
+        });
+        console.log(`${playerName} joined room ${roomCode}`);
+    });
+
+    socket.on('start-game', ({ roomCode }) => {
+        const room = rooms.get(roomCode);
+        if (!room) {
+            console.log(`[Start] Room ${roomCode} not found`);
+            return;
+        }
+        if (room.getPlayerCount() < 1) return;
+        if (room.hostId !== socket.id) {
+            console.log(`[Start] User ${socket.id} is not host of ${roomCode}`);
+            return;
+        }
+        console.log(`[Start] Starting game in room ${roomCode}`);
+        room.startGame();
+    });
+
+    socket.on('player-input', ({ roomCode, direction }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        room.handleInput(socket.id, direction);
+    });
+
+    socket.on('answer-question', ({ roomCode, answerIndex }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        room.handleAnswer(socket.id, answerIndex);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`Player disconnected: ${socket.id}`);
+        // Find and clean up rooms
+        for (const [code, room] of rooms) {
+            if (room.hasPlayer(socket.id)) {
+                room.removePlayer(socket.id);
+                if (room.getPlayerCount() === 0) {
+                    room.stop();
+                    rooms.delete(code);
+                    console.log(`Room ${code} deleted (empty)`);
+                } else {
+                    io.to(code).emit('player-left', {
+                        players: room.getPlayersInfo()
+                    });
+                }
+                break;
+            }
+        }
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`🏎️  Racing Game server running on http://localhost:${PORT}`);
+});

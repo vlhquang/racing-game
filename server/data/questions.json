@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "question": "5 + 3 = ?",
+        "answers": [
+            "6",
+            "7",
+            "8",
+            "9"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    },
+    {
+        "id": 2,
+        "question": "12 - 4 = ?",
+        "answers": [
+            "6",
+            "7",
+            "8",
+            "9"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    },
+    {
+        "id": 3,
+        "question": "3 × 4 = ?",
+        "answers": [
+            "10",
+            "11",
+            "12",
+            "13"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    },
+    {
+        "id": 4,
+        "question": "20 ÷ 5 = ?",
+        "answers": [
+            "3",
+            "4",
+            "5",
+            "6"
+        ],
+        "correctIndex": 1,
+        "timeLimit": 7
+    },
+    {
+        "id": 5,
+        "question": "15 + 27 = ?",
+        "answers": [
+            "40",
+            "41",
+            "42",
+            "43"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    },
+    {
+        "id": 6,
+        "question": "100 - 37 = ?",
+        "answers": [
+            "53",
+            "63",
+            "73",
+            "83"
+        ],
+        "correctIndex": 1,
+        "timeLimit": 7
+    },
+    {
+        "id": 7,
+        "question": "7 × 8 = ?",
+        "answers": [
+            "54",
+            "56",
+            "58",
+            "64"
+        ],
+        "correctIndex": 1,
+        "timeLimit": 7
+    },
+    {
+        "id": 8,
+        "question": "45 ÷ 9 = ?",
+        "answers": [
+            "4",
+            "5",
+            "6",
+            "7"
+        ],
+        "correctIndex": 1,
+        "timeLimit": 7
+    },
+    {
+        "id": 9,
+        "question": "2³ = ?",
+        "answers": [
+            "4",
+            "6",
+            "8",
+            "16"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    },
+    {
+        "id": 10,
+        "question": "√64 = ?",
+        "answers": [
+            "6",
+            "7",
+            "8",
+            "9"
+        ],
+        "correctIndex": 2,
+        "timeLimit": 7
+    }
+]
