@@ -6,7 +6,10 @@ const Network = (() => {
     const callbacks = {};
 
     function connect() {
-        socket = io();
+        // Auto-detects protocol (http/https) and host
+        socket = io({
+            transports: ['websocket', 'polling']
+        });
 
         socket.on('connect', () => {
             console.log('Connected:', socket.id);
