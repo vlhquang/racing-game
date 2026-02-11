@@ -40,7 +40,11 @@ class GameRoom {
 
     addPlayer(socket, name, vehicleType) {
         const playerIndex = this.players.size;
-        const type = (vehicleType === 'taxi' || vehicleType === 'bus') ? vehicleType : 'car';
+        const allowed = new Set([
+            'car', 'taxi', 'bus', 'police', 'trafficpolice',
+            'truck', 'sport', 'icecream', 'tank', 'f1', 'bike'
+        ]);
+        const type = allowed.has(vehicleType) ? vehicleType : 'car';
         const player = {
             id: socket.id,
             name: name,
@@ -74,6 +78,18 @@ class GameRoom {
     hasPlayer(id) { return this.players.has(id); }
     getPlayerCount() { return this.players.size; }
     getLaneCount() { return this.players.size + 1; }
+
+    setPlayerVehicle(playerId, vehicleType) {
+        const allowed = new Set([
+            'car', 'taxi', 'bus', 'police', 'trafficpolice',
+            'truck', 'sport', 'icecream', 'tank', 'f1', 'bike'
+        ]);
+        const p = this.players.get(playerId);
+        if (!p) return;
+        if (allowed.has(vehicleType)) {
+            p.vehicleType = vehicleType;
+        }
+    }
 
     getPlayersInfo() {
         const infos = [];
@@ -176,7 +192,10 @@ class GameRoom {
 
             // Spawn question when cooldown reaches ready (no distance gate)
             if (!hasPenalty && this.questionCooldownTimer <= 0) {
-                this.spawnQuestionsOnly(maxDistance);
+                const leadSec = (this.config.questionLeadTime || 2.5);
+                const leadDist = (this.config.baseSpeed || 300) * leadSec;
+                const spawnAt = Math.max(maxDistance + leadDist, maxDistance + 200);
+                this.spawnQuestionsOnly(spawnAt);
             }
 
             for (const p of this.players.values()) {
@@ -248,35 +267,48 @@ class GameRoom {
             const spawnOffset = (this.config.questionSpawnOffset !== undefined)
                 ? this.config.questionSpawnOffset
                 : 150;
+            const row = Math.floor(atDistance / 300) * 300;
+            const spawnDistance = Math.max(atDistance, row + spawnOffset);
 
             const laneBlocked = new Set();
             try {
                 // Avoid lanes occupied by deterministic obstacles in adjacent rows
-                const prevRow = atDistance;
-                const nextRow = atDistance + 300;
-                for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
-                for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
-            } catch (e) {
-                // If seed not ready for any reason, fall back to random lane
-            }
+                    const prevRow = row;
+                    const nextRow = row + 300;
+                    for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
+                    for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
+                } catch (e) {
+                    // If seed not ready for any reason, fall back to random lane
+                }
 
             const allLanes = Array.from({ length: laneCount }, (_, i) => i);
             let candidates = allLanes.filter(l => !laneBlocked.has(l));
             if (candidates.length === 0) {
                 // Relax: only avoid current row
-                const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(atDistance, laneCount));
+                const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(row, laneCount));
                 candidates = allLanes.filter(l => !prevRowBlocked.has(l));
             }
             if (candidates.length === 0) candidates = allLanes;
 
-            const lane = candidates[Math.floor(Math.random() * candidates.length)];
-            this.obstacles.push({
-                id: 'q_' + Math.random().toString(36).substr(2, 5),
-                type: 'question',
-                lane,
-                distance: atDistance + spawnOffset,
-                active: true
+            // Final safety: avoid any obstacle in nearby rows (prev/current/next)
+            const nearRows = [row - 300, row, row + 300];
+            const safeLanes = candidates.filter(l => {
+                for (const r of nearRows) {
+                    if (r < 0) continue;
+                    const lanes = this.getDeterministicObstacleLanes(r, laneCount);
+                    if (lanes.includes(l)) return false;
+                }
+                return true;
             });
+            const finalList = (safeLanes.length > 0) ? safeLanes : candidates;
+            const lane = finalList[Math.floor(Math.random() * finalList.length)];
+                this.obstacles.push({
+                    id: 'q_' + Math.random().toString(36).substr(2, 5),
+                    type: 'question',
+                    lane,
+                    distance: spawnDistance,
+                    active: true
+                });
 
             this.questionCooldownTimer = this.config.questionIntervalMin +
                 Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);

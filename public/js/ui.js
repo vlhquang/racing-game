@@ -24,6 +24,7 @@ const UI = (() => {
         const btnPlayAgain = document.getElementById('btn-play-again');
         const playerNameInput = document.getElementById('player-name');
         const vehicleSelect = document.getElementById('vehicle-type');
+        const resultsVehicleSelect = document.getElementById('results-vehicle-type');
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
 
@@ -103,7 +104,10 @@ const UI = (() => {
                 location.reload();
                 return;
             }
-            Network.restartGame(currentRoomCode);
+            if (resultsVehicleSelect) {
+                vehicleSelect.value = resultsVehicleSelect.value || 'car';
+            }
+            Network.restartGame(currentRoomCode, vehicleSelect.value || 'car');
         });
 
         function showError(msg) {
@@ -185,7 +189,23 @@ const UI = (() => {
                 ? 'TAXI'
                 : (p.vehicleType === 'bus')
                     ? 'BUS'
-                    : 'CAR';
+                : (p.vehicleType === 'police')
+                    ? 'POLICE'
+                    : (p.vehicleType === 'trafficpolice')
+                        ? 'TRAFFIC'
+                    : (p.vehicleType === 'truck')
+                        ? 'TRUCK'
+                    : (p.vehicleType === 'sport')
+                        ? 'SPORT'
+                    : (p.vehicleType === 'icecream')
+                        ? 'ICECREAM'
+                    : (p.vehicleType === 'tank')
+                        ? 'TANK'
+                        : (p.vehicleType === 'f1')
+                            ? 'F1'
+                            : (p.vehicleType === 'bike')
+                                ? 'BIKE'
+                                : 'CAR';
             const item = document.createElement('div');
             item.className = 'player-item';
             item.innerHTML = `
@@ -465,6 +485,9 @@ const UI = (() => {
 
         const list = document.getElementById('rankings-list');
         list.innerHTML = '';
+        if (resultsVehicleSelect) {
+            resultsVehicleSelect.value = vehicleSelect.value || 'car';
+        }
 
         const medals = ['🥇', '🥈', '🥉', '4️⃣'];
 

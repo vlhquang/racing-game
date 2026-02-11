@@ -108,10 +108,13 @@ io.on('connection', (socket) => {
         room.startGame();
     });
 
-    socket.on('restart-game', ({ roomCode }) => {
+    socket.on('restart-game', ({ roomCode, vehicleType }) => {
         const room = rooms.get(roomCode);
         if (!room) return;
         if (room.hostId !== socket.id) return;
+        if (vehicleType) {
+            room.setPlayerVehicle(socket.id, vehicleType);
+        }
         room.startGame();
     });
 

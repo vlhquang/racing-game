@@ -14,6 +14,7 @@ const CONFIG = {
     questionTime: 15,          // thời gian trả lời (giây)
     questionImageMaxWait: 8,  // thời gian chờ tải ảnh trước khi đếm ngược (giây)
     questionSpawnOffset: 100,  // khoảng cách cộng thêm để spawn hộp câu hỏi (px)
+    questionLeadTime: 2.5,    // thời gian đệm (giây) để hộp câu hỏi xuất hiện đủ xa phía trước
     correctRewardTime: 2,     // thời gian miễn nhiễm khi trả lời đúng (giây)
     rewardSpeedMultiplier: 1.3, // hệ số tăng tốc khi được thưởng
     questionIntervalMin: 8,  // thời gian tối thiểu giữa các câu hỏi (giây)

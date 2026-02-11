@@ -92,8 +92,8 @@ const Network = (() => {
         socket.emit('start-game', { roomCode });
     }
 
-    function restartGame(roomCode) {
-        socket.emit('restart-game', { roomCode });
+    function restartGame(roomCode, vehicleType) {
+        socket.emit('restart-game', { roomCode, vehicleType });
     }
 
     function sendInput(roomCode, direction) {

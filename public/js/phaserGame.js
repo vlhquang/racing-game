@@ -54,7 +54,14 @@ const PhaserGame = (() => {
                 Phaser.Scene.call(this, { key: 'RacingScene' });
             },
             preload: function () {
-                // No external assets; textures are generated in create().
+                // Vehicle sprites (optional). If missing, we fall back to canvas shapes.
+                const vehicles = [
+                    'car', 'taxi', 'bus', 'police', 'trafficpolice',
+                    'truck', 'sport', 'icecream', 'tank', 'f1', 'bike'
+                ];
+                for (const v of vehicles) {
+                    this.load.image(`veh_${v}`, `assets/vehicles/${v}.png`);
+                }
             },
             create: function () {
                 scene = this;
@@ -649,6 +656,11 @@ const PhaserGame = (() => {
                     }
                 }
 
+                if (variant.siren) {
+                    ctx.fillStyle = variant.siren;
+                    ctx.fillRect(W / 2 - 6 * scale, y - 2 * scale, 12 * scale, 6 * scale);
+                }
+
                 ctx.restore();
             }
 
@@ -679,6 +691,149 @@ const PhaserGame = (() => {
                     stripe: 'rgba(255,255,255,0.12)',
                     windows: 'rgba(180, 220, 255, 0.7)'
                 });
+            });
+
+            ensureCanvasTexture(s, '__car_body_police', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 36,
+                    bodyH: 60,
+                    color: '#3b4b7a',
+                    stripe: 'rgba(255,255,255,0.35)',
+                    siren: '#ff4444'
+                });
+                ctx.save();
+                const scale = W / 36;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${8 * scale}px Outfit, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('POLICE', W / 2, H * 0.55);
+                ctx.fillStyle = '#1e90ff';
+                ctx.fillRect(W / 2 - 12 * scale, H * 0.18, 8 * scale, 5 * scale);
+                ctx.fillStyle = '#ff4444';
+                ctx.fillRect(W / 2 + 4 * scale, H * 0.18, 8 * scale, 5 * scale);
+                ctx.restore();
+            });
+
+            ensureCanvasTexture(s, '__car_body_ambulance', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 40,
+                    bodyH: 70,
+                    color: '#ffffff',
+                    stripe: '#e94560',
+                    siren: '#27ae60'
+                });
+            });
+
+            ensureCanvasTexture(s, '__car_body_truck', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 46,
+                    bodyH: 76,
+                    color: '#6b5b95',
+                    stripe: 'rgba(255,255,255,0.12)'
+                });
+            });
+
+            ensureCanvasTexture(s, '__car_body_sport', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 34,
+                    bodyH: 56,
+                    color: '#ff6b6b',
+                    stripe: '#ffffff'
+                });
+            });
+
+            ensureCanvasTexture(s, '__car_body_icecream', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 38,
+                    bodyH: 62,
+                    color: '#ffd1dc',
+                    stripe: '#8be9fd',
+                    checker: '#ffffff'
+                });
+                ctx.save();
+                const scale = W / 36;
+                ctx.translate(W / 2, H * 0.28);
+                ctx.fillStyle = '#f5c518';
+                ctx.beginPath();
+                ctx.moveTo(0, 12 * scale);
+                ctx.lineTo(-6 * scale, -2 * scale);
+                ctx.lineTo(6 * scale, -2 * scale);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#ff8dc7';
+                ctx.beginPath();
+                ctx.arc(0, -6 * scale, 7 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Traffic police car (yellow + black stripe + siren)
+            ensureCanvasTexture(s, '__car_body_trafficpolice', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 36,
+                    bodyH: 60,
+                    color: '#f5c518',
+                    stripe: '#111111',
+                    siren: '#1e90ff'
+                });
+            });
+
+            // Tank (distinct shape)
+            ensureCanvasTexture(s, '__car_body_tank', w, h, (ctx, W, H) => {
+                const scale = W / 36;
+                ctx.save();
+                // Tracks
+                ctx.fillStyle = '#2f2f2f';
+                ctx.fillRect(W * 0.2, H * 0.62, W * 0.6, H * 0.22);
+                // Body
+                ctx.fillStyle = '#5b6b4f';
+                ctx.fillRect(W * 0.22, H * 0.35, W * 0.56, H * 0.3);
+                // Turret
+                ctx.fillStyle = '#4a5a40';
+                ctx.fillRect(W * 0.38, H * 0.22, W * 0.24, H * 0.14);
+                // Barrel
+                ctx.fillStyle = '#3a4532';
+                ctx.fillRect(W * 0.5, H * 0.16, W * 0.32, H * 0.06);
+                ctx.fillRect(W * 0.78, H * 0.14, W * 0.08, H * 0.1);
+                ctx.restore();
+            });
+
+            // F1 car (low + wide + wings)
+            ensureCanvasTexture(s, '__car_body_f1', w, h, (ctx, W, H) => {
+                ctx.save();
+                // Main body
+                ctx.fillStyle = '#ff3b30';
+                ctx.fillRect(W * 0.24, H * 0.52, W * 0.52, H * 0.2);
+                // Nose
+                ctx.fillRect(W * 0.46, H * 0.22, W * 0.08, H * 0.3);
+                // Side pods
+                ctx.fillRect(W * 0.18, H * 0.56, W * 0.1, H * 0.14);
+                ctx.fillRect(W * 0.72, H * 0.56, W * 0.1, H * 0.14);
+                // Front wing
+                ctx.fillStyle = '#111111';
+                ctx.fillRect(W * 0.2, H * 0.72, W * 0.6, H * 0.05);
+                // Rear wing
+                ctx.fillRect(W * 0.22, H * 0.46, W * 0.56, H * 0.06);
+                // Wheels
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(W * 0.18, H * 0.72, W * 0.12, H * 0.08);
+                ctx.fillRect(W * 0.7, H * 0.72, W * 0.12, H * 0.08);
+                ctx.restore();
+            });
+
+            // Bike (slim body + wheels)
+            ensureCanvasTexture(s, '__car_body_bike', w, h, (ctx, W, H) => {
+                ctx.save();
+                ctx.fillStyle = '#222222';
+                ctx.beginPath();
+                ctx.arc(W * 0.35, H * 0.75, W * 0.08, 0, Math.PI * 2);
+                ctx.arc(W * 0.65, H * 0.75, W * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#4a90e2';
+                ctx.fillRect(W * 0.44, H * 0.45, W * 0.12, H * 0.25);
+                ctx.fillRect(W * 0.5, H * 0.35, W * 0.18, H * 0.06);
+                ctx.restore();
             });
 
             ensureCanvasTexture(s, '__car_details', w, h, (ctx, W, H) => {
@@ -826,6 +981,7 @@ const PhaserGame = (() => {
 
                 const isLocal = p.id === myId;
                 const vehicleType = p.vehicleType || 'car';
+                console.log('Rendering vehicle type:', vehicleType);
                 const targetLane = (isLocal && predictedLane !== null) ? predictedLane : p.lane;
 
                 const prevLane = laneSmooth.get(p.id);
@@ -841,30 +997,77 @@ const PhaserGame = (() => {
 
                 const car = sprites.get(p.id);
                 car.container.setPosition(x, y);
-                const scaleMult = (vehicleType === 'bus') ? 1.15 : 1.0;
+                const scaleMult = 1.0;
                 car.container.setScale(baseScale * scaleMult);
                 car.container.setRotation(0);
                 car.container.setAlpha(1);
 
-                const bodyKey = (vehicleType === 'taxi')
-                    ? '__car_body_taxi'
-                    : (vehicleType === 'bus')
-                        ? '__car_body_bus'
-                        : '__car_body_car';
-                if (car.body.texture && car.body.texture.key !== bodyKey) {
-                    car.body.setTexture(bodyKey);
-                }
-
-                const detailsKey = (vehicleType === 'bus') ? '__car_details_bus' : '__car_details';
-                if (car.details.texture && car.details.texture.key !== detailsKey) {
-                    car.details.setTexture(detailsKey);
-                }
-
-                if (p.color && vehicleType === 'car') {
-                    const tint = Phaser.Display.Color.HexStringToColor(p.color).color;
-                    car.body.setTint(tint);
-                } else {
+                const imgKey = `veh_${vehicleType}`;
+                const hasImg = s.textures.exists(imgKey);
+                if (hasImg) {
+                    if (car.body.texture && car.body.texture.key !== imgKey) {
+                        car.body.setTexture(imgKey);
+                    }
                     car.body.clearTint();
+                    car.details.setVisible(false);
+                    car.shadow.setVisible(false);
+
+                    const laneWidth = (config && config.laneWidth) ? config.laneWidth : 80;
+                    const tex = car.body.texture;
+                    if (tex && tex.source && tex.source[0]) {
+                        const wTex = tex.source[0].width || 1;
+                        const hTex = tex.source[0].height || 1;
+                        const targetW = laneWidth * 2.5;
+                        const targetH = targetW * (hTex / wTex);
+                        car.body.setDisplaySize(targetW, targetH);
+                    }
+
+                    // Per-vehicle rotation for image sprites
+                    car.body.setRotation(Phaser.Math.DegToRad(118));
+                } else {
+                    const bodyKey = (vehicleType === 'taxi')
+                        ? '__car_body_taxi'
+                        : (vehicleType === 'bus')
+                            ? '__car_body_bus'
+                            : (vehicleType === 'police')
+                                ? '__car_body_police'
+                                : (vehicleType === 'trafficpolice')
+                                    ? '__car_body_trafficpolice'
+                                    : (vehicleType === 'ambulance')
+                                        ? '__car_body_ambulance'
+                                        : (vehicleType === 'truck')
+                                            ? '__car_body_truck'
+                                            : (vehicleType === 'sport')
+                                                ? '__car_body_sport'
+                                                : (vehicleType === 'icecream')
+                                                    ? '__car_body_icecream'
+                                                    : (vehicleType === 'tank')
+                                                        ? '__car_body_tank'
+                                                        : (vehicleType === 'f1')
+                                                            ? '__car_body_f1'
+                                                            : (vehicleType === 'bike')
+                                                                ? '__car_body_bike'
+                                                                : '__car_body_car';
+                    if (car.body.texture && car.body.texture.key !== bodyKey) {
+                        car.body.setTexture(bodyKey);
+                    }
+
+                    const detailsKey = (vehicleType === 'bus') ? '__car_details_bus' : '__car_details';
+                    if (car.details.texture && car.details.texture.key !== detailsKey) {
+                        car.details.setTexture(detailsKey);
+                    }
+                    if (vehicleType === 'tank' || vehicleType === 'f1' || vehicleType === 'bike') {
+                        car.details.setVisible(false);
+                    } else {
+                        car.details.setVisible(true);
+                    }
+
+                    if (p.color && vehicleType === 'car') {
+                        const tint = Phaser.Display.Color.HexStringToColor(p.color).color;
+                        car.body.setTint(tint);
+                    } else {
+                        car.body.clearTint();
+                    }
                 }
 
                 // Status effects (visual only)
