@@ -80,12 +80,12 @@ const Network = (() => {
         }
     }
 
-    function createRoom(playerName) {
-        socket.emit('create-room', { playerName });
+    function createRoom(playerName, vehicleType) {
+        socket.emit('create-room', { playerName, vehicleType });
     }
 
-    function joinRoom(roomCode, playerName) {
-        socket.emit('join-room', { roomCode: roomCode.toUpperCase(), playerName });
+    function joinRoom(roomCode, playerName, vehicleType) {
+        socket.emit('join-room', { roomCode: roomCode.toUpperCase(), playerName, vehicleType });
     }
 
     function startGame(roomCode) {

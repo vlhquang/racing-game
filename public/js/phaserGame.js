@@ -585,6 +585,9 @@ const PhaserGame = (() => {
         const sprites = new Map();
         const nameTags = new Map();
         const laneSmooth = new Map();
+        const bubbleBurstAt = new Map();
+        const bubbleBurstDone = new Set();
+        const bubbleParticles = [];
 
         function ensureCarTextures() {
             // Split into layers so tint only affects body.
@@ -604,28 +607,66 @@ const PhaserGame = (() => {
                 ctx.restore();
             });
 
-            ensureCanvasTexture(s, '__car_body', w, h, (ctx, W, H) => {
-                const bw = 36 * scale;
-                const bh = 60 * scale;
+            function drawBody(ctx, W, H, variant) {
+                const bw = variant.bodyW * scale;
+                const bh = variant.bodyH * scale;
                 const x = (W - bw) / 2;
                 const y = (H - bh) / 2;
                 const r = 8 * scale;
 
-                // Main body (white so Phaser tint works)
                 ctx.save();
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = variant.color;
                 roundRect(ctx, x, y, bw, bh, r);
                 ctx.fill();
 
-                // Darker top shade (black alpha survives tint)
                 ctx.fillStyle = 'rgba(0,0,0,0.18)';
                 roundRectTop(ctx, x, y, bw, bh / 2 + 6 * scale, r);
                 ctx.fill();
 
-                // Racing stripe (subtle)
-                ctx.fillStyle = 'rgba(255,255,255,0.14)';
-                ctx.fillRect(W / 2 - 3 * scale, y, 6 * scale, bh);
+                if (variant.stripe) {
+                    ctx.fillStyle = variant.stripe;
+                    ctx.fillRect(W / 2 - 3 * scale, y, 6 * scale, bh);
+                }
+
+                if (variant.checker) {
+                    ctx.fillStyle = variant.checker;
+                    const size = 6 * scale;
+                    for (let i = 0; i < 4; i++) {
+                        const cx = x + 6 * scale + i * size;
+                        const cy = y + bh - 12 * scale;
+                        ctx.fillRect(cx, cy, size - 2, size - 2);
+                    }
+                }
+
                 ctx.restore();
+            }
+
+            ensureCanvasTexture(s, '__car_body_car', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 36,
+                    bodyH: 60,
+                    color: '#ffffff',
+                    stripe: 'rgba(255,255,255,0.14)'
+                });
+            });
+
+            ensureCanvasTexture(s, '__car_body_taxi', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 36,
+                    bodyH: 60,
+                    color: '#f5c518',
+                    stripe: 'rgba(0,0,0,0.2)',
+                    checker: '#1a1a1a'
+                });
+            });
+
+            ensureCanvasTexture(s, '__car_body_bus', w, h, (ctx, W, H) => {
+                drawBody(ctx, W, H, {
+                    bodyW: 44,
+                    bodyH: 80,
+                    color: '#e84a3a',
+                    stripe: 'rgba(255,255,255,0.12)'
+                });
             });
 
             ensureCanvasTexture(s, '__car_details', w, h, (ctx, W, H) => {
@@ -694,11 +735,26 @@ const PhaserGame = (() => {
             ctx.closePath();
         }
 
+        function ensureBubbleTextures() {
+            ensureCanvasTexture(s, '__bubble_piece', 10, 10, (ctx, w, h) => {
+                ctx.save();
+                ctx.translate(w / 2, h / 2);
+                ctx.fillStyle = 'rgba(180, 220, 255, 0.9)';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 4, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
         ensureCarTextures();
+        ensureBubbleTextures();
 
         function update(mySmoothDist, laneCount) {
             if (!gameState || !gameState.players) return;
             const height = s.scale.height;
+            const w = s.scale.width;
+            const dt = Math.min((s.game.loop.delta || 16) / 1000, 0.05);
 
             const seen = new Set();
             for (const p of gameState.players) {
@@ -709,7 +765,7 @@ const PhaserGame = (() => {
                 if (!sprite) {
                     const container = s.add.container(0, 0);
                     const shadow = s.add.image(0, 0, '__car_shadow').setOrigin(0.5, 0.5);
-                    const body = s.add.image(0, 0, '__car_body').setOrigin(0.5, 0.5);
+                    const body = s.add.image(0, 0, '__car_body_car').setOrigin(0.5, 0.5);
                     const details = s.add.image(0, 0, '__car_details').setOrigin(0.5, 0.5);
                     container.add([shadow, body, details]);
                     container.setDepth(4);
@@ -727,6 +783,7 @@ const PhaserGame = (() => {
                 }
 
                 const isLocal = p.id === myId;
+                const vehicleType = p.vehicleType || 'car';
                 const targetLane = (isLocal && predictedLane !== null) ? predictedLane : p.lane;
 
                 const prevLane = laneSmooth.get(p.id);
@@ -738,14 +795,25 @@ const PhaserGame = (() => {
                 const x = laneX(nextLane, laneCount);
                 const pSmoothDist = displayDistances.get(p.id) ?? p.distance;
                 const y = isLocal ? height * 0.75 : (height * 0.75 - (pSmoothDist - mySmoothDist));
+                const baseScale = isLocal ? 0.5 : 0.45;
 
                 const car = sprites.get(p.id);
                 car.container.setPosition(x, y);
-                car.container.setScale(isLocal ? 0.5 : 0.45);
+                const scaleMult = (vehicleType === 'bus') ? 1.15 : 1.0;
+                car.container.setScale(baseScale * scaleMult);
                 car.container.setRotation(0);
                 car.container.setAlpha(1);
 
-                if (p.color) {
+                const bodyKey = (vehicleType === 'taxi')
+                    ? '__car_body_taxi'
+                    : (vehicleType === 'bus')
+                        ? '__car_body_bus'
+                        : '__car_body_car';
+                if (car.body.texture && car.body.texture.key !== bodyKey) {
+                    car.body.setTexture(bodyKey);
+                }
+
+                if (p.color && vehicleType === 'car') {
                     const tint = Phaser.Display.Color.HexStringToColor(p.color).color;
                     car.body.setTint(tint);
                 } else {
@@ -760,6 +828,40 @@ const PhaserGame = (() => {
                     car.container.x += Math.sin((s.time.now / 1000) * 30) * 2;
                 } else if (p.status === 'penalized' && p.effectType === 'blur') {
                     car.container.setAlpha(0.6);
+                } else if (p.status === 'penalized' && p.effectType === 'rocket') {
+                    const maxTime = Math.max(p.effectTimer || 0, getPenaltyMaxTime('rocket'));
+                    const progress = maxTime > 0 ? (1 - (p.effectTimer / maxTime)) : 0;
+                    const angle = progress * Math.PI * 4;
+                    const radius = Math.min(w, height) * 0.35;
+                    const cx = w / 2;
+                    const cy = height / 2;
+                    car.container.setRotation(angle * 6);
+                    car.container.setPosition(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+                    car.container.setAlpha(0.9);
+                } else if (p.status === 'penalized' && p.effectType === 'bubble') {
+                    const maxTime = Math.max(p.effectTimer || 0, getPenaltyMaxTime('bubble'));
+                    const progress = maxTime > 0 ? (1 - (p.effectTimer / maxTime)) : 0;
+                    const scaleBoost = 1 + Math.min(1.2, progress * 1.4);
+                    car.container.setScale(baseScale * scaleBoost);
+                    if (progress > 0.8) {
+                        car.container.setAlpha(Math.max(0.2, 1 - (progress - 0.8) / 0.2));
+                    }
+
+                    const burstKey = `${p.id}-bubble`;
+                    if (progress >= 1 && !bubbleBurstDone.has(burstKey)) {
+                        bubbleBurstDone.add(burstKey);
+                        bubbleBurstAt.set(burstKey, s.time.now);
+                        emitBubbleBurst(x, y);
+                    }
+                    const burstAt = bubbleBurstAt.get(burstKey);
+                    if (burstAt) {
+                        const t = (s.time.now - burstAt) / 300;
+                        if (t <= 1) {
+                            car.container.setAlpha(1 - t);
+                        } else {
+                            bubbleBurstAt.delete(burstKey);
+                        }
+                    }
                 } else if (p.status === 'rewarded') {
                     // subtle glow by boosting shadow alpha
                     car.shadow.setAlpha(0.28 + Math.sin((s.time.now / 1000) * 10) * 0.06);
@@ -767,10 +869,31 @@ const PhaserGame = (() => {
                     car.shadow.setAlpha(1);
                 }
 
+                if (!(p.status === 'penalized' && p.effectType === 'bubble')) {
+                    const burstKey = `${p.id}-bubble`;
+                    if (bubbleBurstDone.has(burstKey)) bubbleBurstDone.delete(burstKey);
+                }
+
                 label.setText(p.name || '');
                 label.setPosition(x, y - 40);
                 label.setVisible(y > -120 && y < height + 120);
                 car.container.setVisible(y > -120 && y < height + 120);
+            }
+
+            // Update bubble particles
+            for (let i = bubbleParticles.length - 1; i >= 0; i--) {
+                const p = bubbleParticles[i];
+                p.life -= dt;
+                if (p.life <= 0) {
+                    p.sprite.destroy();
+                    bubbleParticles.splice(i, 1);
+                    continue;
+                }
+                p.vy += 40 * dt;
+                p.sprite.x += p.vx * dt;
+                p.sprite.y += p.vy * dt;
+                p.sprite.setRotation(p.sprite.rotation + p.rot * dt);
+                p.sprite.setAlpha(Math.max(0, p.life / p.maxLife));
             }
 
             // Hide removed players
@@ -794,6 +917,32 @@ const PhaserGame = (() => {
             }
             for (const label of nameTags.values()) {
                 label.setVisible(false);
+            }
+        }
+
+        function getPenaltyMaxTime(effectType) {
+            if (config && config.penalties && config.penalties.types && config.penalties.types[effectType]) {
+                return Number(config.penalties.types[effectType].duration) || 3;
+            }
+            return 3;
+        }
+
+        function emitBubbleBurst(x, y) {
+            const count = 10;
+            for (let i = 0; i < count; i++) {
+                const spr = s.add.image(x, y, '__bubble_piece');
+                spr.setOrigin(0.5, 0.5);
+                spr.setDepth(8);
+                const angle = (Math.PI * 2 * i) / count;
+                const speed = 80 + Math.random() * 60;
+                bubbleParticles.push({
+                    sprite: spr,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 40,
+                    rot: (Math.random() - 0.5) * 6,
+                    life: 0.45 + Math.random() * 0.25,
+                    maxLife: 0.7
+                });
             }
         }
 

@@ -52,11 +52,11 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    socket.on('create-room', ({ playerName }) => {
+    socket.on('create-room', ({ playerName, vehicleType }) => {
         const roomCode = generateRoomCode();
         const room = new GameRoom(roomCode, io);
         rooms.set(roomCode, room);
-        room.addPlayer(socket, playerName);
+        room.addPlayer(socket, playerName, vehicleType);
         socket.join(roomCode);
         socket.emit('room-created', {
             roomCode,
@@ -66,7 +66,7 @@ io.on('connection', (socket) => {
         console.log(`Room ${roomCode} created by ${playerName}`);
     });
 
-    socket.on('join-room', ({ roomCode, playerName }) => {
+    socket.on('join-room', ({ roomCode, playerName, vehicleType }) => {
         const room = rooms.get(roomCode);
         if (!room) {
             socket.emit('error-msg', { message: 'Phòng không tồn tại!' });
@@ -80,7 +80,7 @@ io.on('connection', (socket) => {
             socket.emit('error-msg', { message: 'Phòng đã đầy!' });
             return;
         }
-        room.addPlayer(socket, playerName);
+        room.addPlayer(socket, playerName, vehicleType);
         socket.join(roomCode);
         socket.emit('room-joined', {
             roomCode,

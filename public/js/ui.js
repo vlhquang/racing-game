@@ -23,6 +23,7 @@ const UI = (() => {
         const btnStart = document.getElementById('btn-start');
         const btnPlayAgain = document.getElementById('btn-play-again');
         const playerNameInput = document.getElementById('player-name');
+        const vehicleSelect = document.getElementById('vehicle-type');
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
 
@@ -47,7 +48,8 @@ const UI = (() => {
                 return;
             }
             setLoading(btnCreate, true);
-            Network.createRoom(name);
+            const vehicleType = vehicleSelect ? (vehicleSelect.value || 'car') : 'car';
+            Network.createRoom(name, vehicleType);
         });
 
         // Join room
@@ -57,7 +59,8 @@ const UI = (() => {
             if (!name) { showError('Vui lòng nhập tên!'); return; }
             if (!code || code.length < 4) { showError('Mã phòng không hợp lệ!'); return; }
             setLoading(btnJoin, true);
-            Network.joinRoom(code, name);
+            const vehicleType = vehicleSelect ? (vehicleSelect.value || 'car') : 'car';
+            Network.joinRoom(code, name, vehicleType);
         });
 
         // Enter key to join
@@ -178,11 +181,17 @@ const UI = (() => {
         const list = document.getElementById('player-list');
         list.innerHTML = '';
         players.forEach(p => {
+            const vehicleLabel = (p.vehicleType === 'taxi')
+                ? 'TAXI'
+                : (p.vehicleType === 'bus')
+                    ? 'BUS'
+                    : 'CAR';
             const item = document.createElement('div');
             item.className = 'player-item';
             item.innerHTML = `
         <div class="player-dot" style="background:${p.color}"></div>
         <span>${escapeHtml(p.name)}</span>
+        <span class="player-vehicle-badge">${vehicleLabel}</span>
         ${p.isHost ? '<span class="player-host-badge">HOST</span>' : ''}
       `;
             list.appendChild(item);
@@ -216,6 +225,7 @@ const UI = (() => {
         document.getElementById('results-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         document.getElementById('game-screen').classList.add('active');
+        setControlsVisible(true);
     }
 
     function showCountdown(count) {
@@ -404,7 +414,9 @@ const UI = (() => {
                 slow: '🐌 CHẬM LẠI',
                 reverse: '🔄 ĐẢO ĐIỀU KHIỂN',
                 blur: '👻 MỜ MÀN HÌNH',
-                spin: '🌀 QUAY VÒNG'
+                spin: '🌀 QUAY VÒNG',
+                rocket: '🚀 BAY VÒNG',
+                bubble: '🫧 BÓNG BÓNG'
             };
 
             // Slot machine effect
@@ -476,6 +488,21 @@ const UI = (() => {
         });
     }
 
+    function setControlsVisible(visible) {
+        const controls = document.getElementById('mobile-controls');
+        if (!controls) return;
+        if (visible) {
+            controls.classList.remove('hidden');
+            controls.style.display = 'flex';
+        } else {
+            controls.classList.add('hidden');
+        }
+    }
+
+    function ensureControlsVisible() {
+        setControlsVisible(true);
+    }
+
     function getRoomCode() { return currentRoomCode; }
     function getPlayerId() { return myPlayerId; }
     function getIsHost() { return isHost; }
@@ -486,5 +513,5 @@ const UI = (() => {
         return div.innerHTML;
     }
 
-    return { init, showQuestion, startQuestionCountdown, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId, getIsHost };
+    return { init, showQuestion, startQuestionCountdown, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId, getIsHost, ensureControlsVisible };
 })();

@@ -34,7 +34,10 @@ body {
   font-family: 'Inter', sans-serif;
   background: var(--bg-dark);
   color: var(--text-primary);
-  touch-action: manipulation;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* ============ SCREENS ============ */
@@ -253,6 +256,16 @@ body {
   font-size: 0.7rem;
   background: var(--accent-gold);
   color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.player-vehicle-badge {
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: auto;

@@ -13,11 +13,11 @@ const CONFIG = {
     initialObstacleDelay: 3.0,  // seconds before first obstacles appear
 
     // Questions
-    questionTime: 7,          // seconds to answer
+    questionTime: 15,          // seconds to answer
     questionImageMaxWait: 8,  // seconds to wait for clients to load image before starting countdown
-    questionSpawnOffset: 150,  // pixels after row distance to spawn question (best at mid-gap between deterministic rows)
+    questionSpawnOffset: 100,  // pixels after row distance to spawn question (best at mid-gap between deterministic rows)
     correctRewardTime: 2,     // seconds free movement (invincible)
-    rewardSpeedMultiplier: 1.2, // 10% speed boost during reward
+    rewardSpeedMultiplier: 1.3, // 10% speed boost during reward
     questionIntervalMin: 8,  // min seconds between questions
     questionIntervalMax: 15,  // max seconds between questions
     maxQuestions: 100,           // per game
@@ -46,19 +46,31 @@ const CONFIG = {
                 duration: 5.0,
                 speedMultiplier: 1.0, // Normal speed
                 opacity: 1          // 80% blur opacity
+            },
+            rocket: {
+                duration: 3.0,
+                speedMultiplier: 0.0,
+                wrongDuration: 3.0,
+                noAnswerDuration: 3.0
+            },
+            bubble: {
+                duration: 3.0,
+                speedMultiplier: 0.0,
+                wrongDuration: 3.0,
+                noAnswerDuration: 3.0
             }
         },
 
         // Penalties for WRONG answer
         wrongAnswer: {
             durationMultiplier: 1.0, // Multiplier for base durations above
-            availableTypes: ['stop', 'reverse', 'spin', 'blur']
+            availableTypes: ['stop', 'reverse', 'spin', 'blur', 'rocket', 'bubble']
         },
 
         // Penalties for NO answer (timeout)
         noAnswer: {
             durationMultiplier: 2, // 50% longer duration for ignoring
-            availableTypes: ['stop', 'reverse', 'spin', 'blur']
+            availableTypes: ['stop', 'reverse', 'spin', 'blur', 'rocket', 'bubble']
         }
     }
 };

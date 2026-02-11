@@ -38,8 +38,9 @@ class GameRoom {
         return this.config.questionTime;
     }
 
-    addPlayer(socket, name) {
+    addPlayer(socket, name, vehicleType) {
         const playerIndex = this.players.size;
+        const type = (vehicleType === 'taxi' || vehicleType === 'bus') ? vehicleType : 'car';
         const player = {
             id: socket.id,
             name: name,
@@ -48,6 +49,7 @@ class GameRoom {
             speed: this.config.baseSpeed,
             color: ['#FF4444', '#4488FF', '#FFCC00', '#44CC44'][playerIndex] || '#ffffff',
             colorName: ['red', 'blue', 'yellow', 'green'][playerIndex] || 'white',
+            vehicleType: type,
             status: 'normal',
             effectTimer: 0,
             effectType: null,
@@ -81,6 +83,7 @@ class GameRoom {
                 name: p.name,
                 color: p.color,
                 colorName: p.colorName,
+                vehicleType: p.vehicleType,
                 index: p.index,
                 isHost: p.id === this.hostId
             });
@@ -474,8 +477,7 @@ class GameRoom {
 
             if (answer === undefined) {
                 penalty = this.getRandomPenalty(true);
-                const pConfig = this.config.penalties.types[penalty];
-                duration = pConfig.duration * this.config.penalties.noAnswer.durationMultiplier;
+                duration = this.getPenaltyDuration(penalty, true);
                 p.status = 'penalized';
                 p.effectType = penalty;
                 p.effectTimer = duration;
@@ -486,8 +488,7 @@ class GameRoom {
                 p.effectTimer = duration;
             } else {
                 penalty = this.getRandomPenalty(false);
-                const pConfig = this.config.penalties.types[penalty];
-                duration = pConfig.duration * this.config.penalties.wrongAnswer.durationMultiplier;
+                duration = this.getPenaltyDuration(penalty, false);
                 p.status = 'penalized';
                 p.effectType = penalty;
                 p.effectTimer = duration;
@@ -530,11 +531,30 @@ class GameRoom {
         return pool[Math.floor(Math.random() * pool.length)];
     }
 
+    getPenaltyDuration(penaltyType, isNoAnswer) {
+        const pConfig = this.config.penalties.types[penaltyType];
+        if (!pConfig) return 0;
+
+        if (isNoAnswer && Number.isFinite(pConfig.noAnswerDuration)) {
+            return pConfig.noAnswerDuration;
+        }
+        if (!isNoAnswer && Number.isFinite(pConfig.wrongDuration)) {
+            return pConfig.wrongDuration;
+        }
+
+        const base = Number.isFinite(pConfig.duration) ? pConfig.duration : 0;
+        if (isNoAnswer) {
+            return base * (this.config.penalties.noAnswer.durationMultiplier || 1);
+        }
+        return base * (this.config.penalties.wrongAnswer.durationMultiplier || 1);
+    }
+
     handleInput(playerId, direction) {
         const player = this.players.get(playerId);
         if (!player || this.state !== 'RACING') return;
         // Only block if stopped (oil allows movement now)
         if (player.status === 'stopped') return;
+        if (player.status === 'penalized' && (player.effectType === 'rocket' || player.effectType === 'bubble')) return;
 
         const laneCount = this.getLaneCount();
         if (player.status === 'penalized' && player.effectType === 'reverse') {
@@ -570,6 +590,7 @@ class GameRoom {
                 distance: p.distance,
                 color: p.color,
                 colorName: p.colorName,
+                vehicleType: p.vehicleType,
                 status: p.status,
                 effectType: p.effectType,
                 effectTimer: p.effectTimer,

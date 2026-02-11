@@ -97,6 +97,7 @@
     // Network event: game state update
     Network.on('onGameState', (data) => {
         PhaserGame.setGameState(data, lastInputTime, config);
+        UI.ensureControlsVisible();
     });
 
     // Network event: obstacle hit (for effects)
@@ -139,6 +140,13 @@
 
     // Prevent context menu on long press (mobile)
     document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Hard-disable zoom and page pan on mobile
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('gestureend', (e) => e.preventDefault());
+    document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('dblclick', (e) => e.preventDefault());
 
     console.log('🏎️ Racing Game initialized!');
 })();

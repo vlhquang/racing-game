@@ -224,6 +224,8 @@ const HUD = (() => {
             case 'reverse': return '🔄 ĐẢO ĐIỀU KHIỂN!';
             case 'blur': return '👻 MỜ MÀN HÌNH!';
             case 'spin': return '🌀 QUAY VÒNG!';
+            case 'rocket': return '🚀 BAY VÒNG!';
+            case 'bubble': return '🫧 BÓNG BÓNG!';
             default: return '⚠️ PHẠT!';
         }
     }
@@ -233,6 +235,7 @@ const HUD = (() => {
         if (status === 'stopped') return 1;
         if (status === 'spinning') return 1.5;
         if (status === 'rewarded') return 2;
+        if (status === 'penalized' && (effectType === 'rocket' || effectType === 'bubble')) return 3;
         return 3; // penalized default
     }
 
