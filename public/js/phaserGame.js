@@ -506,13 +506,13 @@ const PhaserGame = (() => {
             // Make road, lane marks, shoulders, and decor scroll the same
             // direction and at the same speed.
             const grassStride = 80;
-            grass.tilePositionY = posMod(distance, grassStride);
+            grass.tilePositionY = posMod(-distance, grassStride);
 
             const totalDash = 40 + 30;
             laneGfx.y = posMod(distance, totalDash);
 
-            leftShoulder.tilePositionY = posMod(distance, 64);
-            rightShoulder.tilePositionY = posMod(distance, 64);
+            leftShoulder.tilePositionY = posMod(-distance, 64);
+            rightShoulder.tilePositionY = posMod(-distance, 64);
 
             updateDecor(distance, laneCount);
         }
