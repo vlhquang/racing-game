@@ -13,6 +13,7 @@ const Input = (() => {
     function init(leftCb, rightCb) {
         onLeft = leftCb;
         onRight = rightCb;
+        const isMobile = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
         // Keyboard
         document.addEventListener('keydown', (e) => {
@@ -45,71 +46,84 @@ const Input = (() => {
             }
         });
 
-        // Mobile buttons
-        const btnLeft = document.getElementById('btn-left');
-        const btnRight = document.getElementById('btn-right');
+        if (!isMobile) {
+            // Mobile buttons (desktop only)
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
 
-        // Touch events for left button
-        btnLeft.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            onLeft();
-            leftInterval = setInterval(onLeft, HOLD_RATE);
-        });
-        btnLeft.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            clearInterval(leftInterval);
-        });
-        btnLeft.addEventListener('touchcancel', () => clearInterval(leftInterval));
+            // Touch events for left button
+            btnLeft.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                onLeft();
+                leftInterval = setInterval(onLeft, HOLD_RATE);
+            });
+            btnLeft.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                clearInterval(leftInterval);
+            });
+            btnLeft.addEventListener('touchcancel', () => clearInterval(leftInterval));
 
-        // Touch events for right button
-        btnRight.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            onRight();
-            rightInterval = setInterval(onRight, HOLD_RATE);
-        });
-        btnRight.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            clearInterval(rightInterval);
-        });
-        btnRight.addEventListener('touchcancel', () => clearInterval(rightInterval));
+            // Touch events for right button
+            btnRight.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                onRight();
+                rightInterval = setInterval(onRight, HOLD_RATE);
+            });
+            btnRight.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                clearInterval(rightInterval);
+            });
+            btnRight.addEventListener('touchcancel', () => clearInterval(rightInterval));
 
-        // Mouse fallback for desktop
-        btnLeft.addEventListener('mousedown', () => {
-            onLeft();
-            leftInterval = setInterval(onLeft, HOLD_RATE);
-        });
-        btnLeft.addEventListener('mouseup', () => clearInterval(leftInterval));
-        btnLeft.addEventListener('mouseleave', () => clearInterval(leftInterval));
+            // Mouse fallback for desktop
+            btnLeft.addEventListener('mousedown', () => {
+                onLeft();
+                leftInterval = setInterval(onLeft, HOLD_RATE);
+            });
+            btnLeft.addEventListener('mouseup', () => clearInterval(leftInterval));
+            btnLeft.addEventListener('mouseleave', () => clearInterval(leftInterval));
 
-        btnRight.addEventListener('mousedown', () => {
-            onRight();
-            rightInterval = setInterval(onRight, HOLD_RATE);
-        });
-        btnRight.addEventListener('mouseup', () => clearInterval(rightInterval));
-        btnRight.addEventListener('mouseleave', () => clearInterval(rightInterval));
+            btnRight.addEventListener('mousedown', () => {
+                onRight();
+                rightInterval = setInterval(onRight, HOLD_RATE);
+            });
+            btnRight.addEventListener('mouseup', () => clearInterval(rightInterval));
+            btnRight.addEventListener('mouseleave', () => clearInterval(rightInterval));
+        }
 
-        // Swipe detection on game surface
-        let touchStartX = 0;
-        let touchStartY = 0;
         const surface = document.getElementById('phaser-container') || document.getElementById('game-canvas');
 
         if (!surface) return;
 
-        surface.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-        }, { passive: true });
-
-        surface.addEventListener('touchend', (e) => {
-            const touch = e.changedTouches[0];
-            const dx = touch.clientX - touchStartX;
-            const dy = touch.clientY - touchStartY;
-            if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
-                if (dx < 0) onLeft();
+        if (isMobile) {
+            // Tap left/right empty side of the road to move
+            surface.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                const rect = surface.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                if (x < rect.width / 2) onLeft();
                 else onRight();
-            }
-        }, { passive: true });
+            }, { passive: true });
+        } else {
+            // Swipe detection on game surface (desktop)
+            let touchStartX = 0;
+            let touchStartY = 0;
+            surface.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            }, { passive: true });
+
+            surface.addEventListener('touchend', (e) => {
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+                    if (dx < 0) onLeft();
+                    else onRight();
+                }
+            }, { passive: true });
+        }
     }
 
     return { init };

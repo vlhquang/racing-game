@@ -436,9 +436,15 @@ body {
   transform: scale(0.95);
 }
 
-.answer-btn:hover {
-  border-color: var(--accent-gold);
-  background: rgba(245, 197, 24, 0.15);
+@media (hover: hover) and (pointer: fine) {
+  .answer-btn:hover {
+    border-color: var(--accent-gold);
+    background: rgba(245, 197, 24, 0.15);
+  }
+}
+
+.answer-btn:focus {
+  outline: none;
 }
 
 .answer-btn.selected {

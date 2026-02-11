@@ -258,6 +258,10 @@ const UI = (() => {
         const timerFill = document.getElementById('question-timer-fill');
         const timerText = document.getElementById('question-timer-text');
 
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
+
         overlay.classList.remove('hidden');
         qText.textContent = data.question;
         qAnswers.innerHTML = '';
@@ -289,6 +293,7 @@ const UI = (() => {
                 Network.answerQuestion(currentRoomCode, idx);
                 qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
                 btn.classList.add('selected');
+                btn.blur();
             };
             qAnswers.appendChild(btn);
         });
@@ -491,6 +496,12 @@ const UI = (() => {
     function setControlsVisible(visible) {
         const controls = document.getElementById('mobile-controls');
         if (!controls) return;
+        const isMobile = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (isMobile) {
+            controls.classList.add('hidden');
+            controls.style.display = 'none';
+            return;
+        }
         if (visible) {
             controls.classList.remove('hidden');
             controls.style.display = 'flex';

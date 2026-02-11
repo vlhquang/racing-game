@@ -638,6 +638,17 @@ const PhaserGame = (() => {
                     }
                 }
 
+                if (variant.windows) {
+                    ctx.fillStyle = variant.windows;
+                    const winW = 8 * scale;
+                    const winH = 10 * scale;
+                    for (let i = 0; i < 4; i++) {
+                        const wx = x + 6 * scale + i * (winW + 4 * scale);
+                        const wy = y + 10 * scale;
+                        ctx.fillRect(wx, wy, winW, winH);
+                    }
+                }
+
                 ctx.restore();
             }
 
@@ -665,7 +676,8 @@ const PhaserGame = (() => {
                     bodyW: 44,
                     bodyH: 80,
                     color: '#e84a3a',
-                    stripe: 'rgba(255,255,255,0.12)'
+                    stripe: 'rgba(255,255,255,0.12)',
+                    windows: 'rgba(180, 220, 255, 0.7)'
                 });
             });
 
@@ -710,6 +722,36 @@ const PhaserGame = (() => {
                 ctx.arc(x + 7 * scale, y + bh - 3 * scale, 3 * scale, 0, Math.PI * 2);
                 ctx.arc(x + bw - 7 * scale, y + bh - 3 * scale, 3 * scale, 0, Math.PI * 2);
                 ctx.fill();
+
+                ctx.restore();
+            });
+
+            ensureCanvasTexture(s, '__car_details_bus', w, h, (ctx, W, H) => {
+                const bw = 44 * scale;
+                const bh = 80 * scale;
+                const x = (W - bw) / 2;
+                const y = (H - bh) / 2;
+
+                ctx.save();
+                // Long windows row
+                ctx.fillStyle = 'rgba(180, 220, 255, 0.85)';
+                const winW = 10 * scale;
+                const winH = 12 * scale;
+                for (let i = 0; i < 4; i++) {
+                    ctx.fillRect(x + 6 * scale + i * (winW + 4 * scale), y + 10 * scale, winW, winH);
+                }
+
+                // Wheels (bigger)
+                ctx.fillStyle = '#222222';
+                ctx.fillRect(x - 2 * scale, y + 10 * scale, 7 * scale, 16 * scale);
+                ctx.fillRect(x + bw - 5 * scale, y + 10 * scale, 7 * scale, 16 * scale);
+                ctx.fillRect(x - 2 * scale, y + bh - 22 * scale, 7 * scale, 16 * scale);
+                ctx.fillRect(x + bw - 5 * scale, y + bh - 22 * scale, 7 * scale, 16 * scale);
+
+                // Headlights
+                ctx.fillStyle = '#fff3b0';
+                ctx.fillRect(x + 4 * scale, y + 2 * scale, 6 * scale, 3 * scale);
+                ctx.fillRect(x + bw - 10 * scale, y + 2 * scale, 6 * scale, 3 * scale);
 
                 ctx.restore();
             });
@@ -811,6 +853,11 @@ const PhaserGame = (() => {
                         : '__car_body_car';
                 if (car.body.texture && car.body.texture.key !== bodyKey) {
                     car.body.setTexture(bodyKey);
+                }
+
+                const detailsKey = (vehicleType === 'bus') ? '__car_details_bus' : '__car_details';
+                if (car.details.texture && car.details.texture.key !== detailsKey) {
+                    car.details.setTexture(detailsKey);
                 }
 
                 if (p.color && vehicleType === 'car') {
