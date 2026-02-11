@@ -13,6 +13,7 @@ class GameRoom {
         this.lastTick = 0;
         this.timeRemaining = 0;
         this.activeQuestion = null;
+        this.activeQuestionTimeLimit = null;
         this.questionAnswers = new Map();
         this.questionTimer = null;
         this.questionReadyTimer = null;
@@ -29,6 +30,12 @@ class GameRoom {
         this.questionManager = new QuestionManager();
         this.lastBroadcastTime = 0;
         this.inactiveDeterministicIds = new Set();
+    }
+
+    getQuestionTimeLimit(question) {
+        const qLimit = Number(question && question.timeLimit);
+        if (Number.isFinite(qLimit) && qLimit > 0) return qLimit;
+        return this.config.questionTime;
     }
 
     addPlayer(socket, name) {
@@ -209,6 +216,21 @@ class GameRoom {
         return (s & 0x7fffffff) / 0x7fffffff;
     }
 
+    getDeterministicObstacleLanes(rowDistance, laneCount) {
+        const numRand = this.getSeedRandom(rowDistance + 789);
+        const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
+
+        const lanes = [];
+        for (let i = 0; i < laneCount; i++) lanes.push(i);
+        for (let i = lanes.length - 1; i > 0; i--) {
+            const jRand = this.getSeedRandom(rowDistance + i + 999);
+            const j = Math.floor(jRand * (i + 1));
+            [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+        }
+
+        return lanes.slice(0, numObstacles);
+    }
+
     spawnQuestionsOnly(atDistance) {
         const laneCount = this.getLaneCount();
         const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
@@ -218,12 +240,36 @@ class GameRoom {
         if (canSpawnQuestion) {
             const spawnRand = Math.random();
             if (spawnRand < 0.4) {
-                const lane = Math.floor(Math.random() * laneCount);
+                const spawnOffset = (this.config.questionSpawnOffset !== undefined)
+                    ? this.config.questionSpawnOffset
+                    : 150;
+
+                const laneBlocked = new Set();
+                try {
+                    // Avoid lanes occupied by deterministic obstacles in adjacent rows
+                    const prevRow = atDistance;
+                    const nextRow = atDistance + 300;
+                    for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
+                    for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
+                } catch (e) {
+                    // If seed not ready for any reason, fall back to random lane
+                }
+
+                const allLanes = Array.from({ length: laneCount }, (_, i) => i);
+                let candidates = allLanes.filter(l => !laneBlocked.has(l));
+                if (candidates.length === 0) {
+                    // Relax: only avoid current row
+                    const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(atDistance, laneCount));
+                    candidates = allLanes.filter(l => !prevRowBlocked.has(l));
+                }
+                if (candidates.length === 0) candidates = allLanes;
+
+                const lane = candidates[Math.floor(Math.random() * candidates.length)];
                 this.obstacles.push({
                     id: 'q_' + Math.random().toString(36).substr(2, 5),
                     type: 'question',
                     lane,
-                    distance: atDistance + 60,
+                    distance: atDistance + spawnOffset,
                     active: true
                 });
 
@@ -312,6 +358,7 @@ class GameRoom {
 
         this.state = 'QUESTION';
         this.activeQuestion = question;
+        this.activeQuestionTimeLimit = this.getQuestionTimeLimit(question);
         this.questionAnswers.clear();
         this.questionStartTime = null;
         this.questionCountdownStarted = false;
@@ -322,7 +369,7 @@ class GameRoom {
             this.gameLoopInterval = null;
         }
 
-        const timeLimit = this.config.questionTime;
+        const timeLimit = this.activeQuestionTimeLimit;
         this.io.to(this.roomCode).emit('question-start', {
             triggeredBy,
             questionId: question.id,
@@ -380,7 +427,7 @@ class GameRoom {
             this.questionReadyTimer = null;
         }
 
-        const timeLimit = this.config.questionTime;
+        const timeLimit = this.activeQuestionTimeLimit || this.config.questionTime;
         this.io.to(this.roomCode).emit('question-go', {
             questionId: this.activeQuestion.id,
             timeLimit,
@@ -400,7 +447,7 @@ class GameRoom {
     handleAnswer(playerId, answerIndex) {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
         if (!this.questionStartTime) return;
-        const timeLimit = this.config.questionTime;
+        const timeLimit = this.activeQuestionTimeLimit || this.config.questionTime;
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
         if (elapsed > timeLimit - 2) return;
         this.questionAnswers.set(playerId, answerIndex);
@@ -455,6 +502,7 @@ class GameRoom {
         this.io.to(this.roomCode).emit('question-result', { results, correctIndex: this.activeQuestion.correctIndex });
         this.broadcastState();
         this.activeQuestion = null;
+        this.activeQuestionTimeLimit = null;
         this.questionAnswers.clear();
         this.questionCountdownStarted = false;
         this.questionReadyPlayers.clear();

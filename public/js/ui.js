@@ -8,6 +8,8 @@ const UI = (() => {
     let questionTimerInterval = null;
     let activeQuestionId = null;
     let questionCountdownStarted = false;
+    let questionEndTimeMs = 0;
+    let questionTimeLimitSec = 0;
 
     function init() {
         // DOM elements
@@ -246,6 +248,8 @@ const UI = (() => {
 
         activeQuestionId = data.questionId || null;
         questionCountdownStarted = false;
+        questionEndTimeMs = 0;
+        questionTimeLimitSec = Number(data.timeLimit) || 0;
 
         // Reset timer UI until server says GO
         if (questionTimerInterval) clearInterval(questionTimerInterval);
@@ -262,10 +266,10 @@ const UI = (() => {
             btn.disabled = true;
             btn.onclick = () => {
                 if (!questionCountdownStarted) return;
-                const timeLimit = Number(data.timeLimit) || 0;
-                const textVal = (timerText.textContent || '').replace('s', '');
-                const approxLeft = Number(textVal);
-                if (!Number.isNaN(approxLeft) && approxLeft <= 2) return;
+                if (questionEndTimeMs) {
+                    const leftSec = (questionEndTimeMs - Date.now()) / 1000;
+                    if (leftSec <= 2) return;
+                }
                 Network.answerQuestion(currentRoomCode, idx);
                 qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
                 btn.classList.add('selected');
@@ -310,9 +314,19 @@ const UI = (() => {
         const timerText = document.getElementById('question-timer-text');
 
         const timeLimit = Number(data.timeLimit) || 0;
-        const serverTime = Number(data.serverTime) || Date.now();
-        const driftSec = Math.max(0, (Date.now() - serverTime) / 1000);
-        let timeLeft = Math.max(0, timeLimit - driftSec);
+        questionTimeLimitSec = timeLimit;
+
+        let initialLeftMs = Math.max(0, timeLimit * 1000);
+        const serverTime = Number(data.serverTime);
+        if (Number.isFinite(serverTime)) {
+            const driftMs = Date.now() - serverTime;
+            // If clocks look wildly different, ignore drift.
+            if (Math.abs(driftMs) <= 5 * 60 * 1000) {
+                initialLeftMs = Math.max(0, initialLeftMs - Math.max(0, driftMs));
+            }
+        }
+
+        questionEndTimeMs = Date.now() + initialLeftMs;
 
         questionCountdownStarted = true;
 
@@ -322,17 +336,20 @@ const UI = (() => {
             b.disabled = false;
         });
 
-        timerText.textContent = `${timeLeft.toFixed(1)}s`;
+        const initialLeftSec = initialLeftMs / 1000;
+        timerText.textContent = `${initialLeftSec.toFixed(1)}s`;
         timerText.style.color = '';
 
         if (questionTimerInterval) clearInterval(questionTimerInterval);
         questionTimerInterval = setInterval(() => {
-            timeLeft -= 0.1;
-            if (timeLeft >= 0) {
-                timerText.textContent = `${timeLeft.toFixed(1)}s`;
-                if (timeLeft < 3) timerText.style.color = '#e94560';
+            const leftMs = Math.max(0, questionEndTimeMs - Date.now());
+            const leftSec = leftMs / 1000;
 
-                if (timeLeft <= 2) {
+            if (leftMs > 0) {
+                timerText.textContent = `${leftSec.toFixed(1)}s`;
+                if (leftSec < 3) timerText.style.color = '#e94560';
+
+                if (leftSec <= 2) {
                     qAnswers.querySelectorAll('.answer-btn').forEach(b => {
                         b.classList.add('locked');
                         b.disabled = true;
@@ -342,16 +359,12 @@ const UI = (() => {
                 clearInterval(questionTimerInterval);
                 timerText.textContent = 'Hết giờ!';
             }
-            const progress = timeLimit > 0 ? (timeLeft / timeLimit) * 100 : 0;
-            timerFill.style.width = `${Math.max(0, progress)}%`;
-        }, 100);
 
-        timerFill.style.transition = 'none';
-        timerFill.style.width = '100%';
-        requestAnimationFrame(() => {
-            timerFill.style.transition = `width ${Math.max(0, timeLeft)}s linear`;
-            timerFill.style.width = '0%';
-        });
+            const denom = Math.max(1, (questionTimeLimitSec || timeLimit) * 1000);
+            const progress = (leftMs / denom) * 100;
+            timerFill.style.transition = 'none';
+            timerFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+        }, 50);
     }
 
     function hideQuestion() {
@@ -359,6 +372,8 @@ const UI = (() => {
         document.getElementById('question-overlay').classList.add('hidden');
         activeQuestionId = null;
         questionCountdownStarted = false;
+        questionEndTimeMs = 0;
+        questionTimeLimitSec = 0;
     }
 
     function showQuestionResult(results, correctIndex) {

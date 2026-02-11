@@ -15,6 +15,7 @@ const CONFIG = {
     // Questions
     questionTime: 12,          // seconds to answer
     questionImageMaxWait: 13,  // seconds to wait for clients to load image before starting countdown
+    questionSpawnOffset: 150,  // pixels after row distance to spawn question (best at mid-gap between deterministic rows)
     correctRewardTime: 2,     // seconds free movement (invincible)
     rewardSpeedMultiplier: 1.2, // 10% speed boost during reward
     questionIntervalMin: 8,  // min seconds between questions
