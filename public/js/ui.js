@@ -6,6 +6,8 @@ const UI = (() => {
     let isHost = false;
     let myPlayerId = '';
     let questionTimerInterval = null;
+    let activeQuestionId = null;
+    let questionCountdownStarted = false;
 
     function init() {
         // DOM elements
@@ -242,58 +244,34 @@ const UI = (() => {
         qText.textContent = data.question;
         qAnswers.innerHTML = '';
 
-        // Timer and Answering logic
-        const startTimer = () => {
-            let timeLeft = data.timeLimit;
-            timerText.textContent = `${timeLeft.toFixed(1)}s`;
-            timerText.style.color = ''; // Reset color
+        activeQuestionId = data.questionId || null;
+        questionCountdownStarted = false;
 
-            if (questionTimerInterval) clearInterval(questionTimerInterval);
-            questionTimerInterval = setInterval(() => {
-                timeLeft -= 0.1;
-                if (timeLeft >= 0) {
-                    timerText.textContent = `${timeLeft.toFixed(1)}s`;
-                    if (timeLeft < 3) timerText.style.color = '#e94560';
+        // Reset timer UI until server says GO
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
+        timerFill.style.transition = 'none';
+        timerFill.style.width = '100%';
+        timerText.textContent = data.imageUrl ? 'Đang tải ảnh...' : 'Chuẩn bị...';
+        timerText.style.color = '';
 
-                    if (timeLeft <= 2) {
-                        qAnswers.querySelectorAll('.answer-btn').forEach(b => {
-                            b.classList.add('locked');
-                            b.disabled = true;
-                        });
-                    }
-                } else {
-                    clearInterval(questionTimerInterval);
-                    timerText.textContent = "Hết giờ!";
-                }
-                const progress = (timeLeft / data.timeLimit) * 100;
-                timerFill.style.width = `${Math.max(0, progress)}%`;
-            }, 100);
-
-            // Populate answers only when timer starts (to prevent early clicks)
-            qAnswers.innerHTML = '';
-            data.answers.forEach((ans, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'answer-btn';
-                btn.textContent = ans;
-                btn.onclick = () => {
-                    if (timeLeft > 2) {
-                        // FIX: Use correctly detected currentRoomCode or pass it from showQuestion
-                        Network.answerQuestion(currentRoomCode, idx);
-                        qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
-                        btn.classList.add('selected');
-                    }
-                };
-                qAnswers.appendChild(btn);
-            });
-
-            // Transition fill
-            timerFill.style.transition = 'none';
-            timerFill.style.width = '100%';
-            requestAnimationFrame(() => {
-                timerFill.style.transition = `width ${data.timeLimit}s linear`;
-                timerFill.style.width = '0%';
-            });
-        };
+        // Render answers but lock until countdown starts
+        data.answers.forEach((ans, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn locked';
+            btn.textContent = ans;
+            btn.disabled = true;
+            btn.onclick = () => {
+                if (!questionCountdownStarted) return;
+                const timeLimit = Number(data.timeLimit) || 0;
+                const textVal = (timerText.textContent || '').replace('s', '');
+                const approxLeft = Number(textVal);
+                if (!Number.isNaN(approxLeft) && approxLeft <= 2) return;
+                Network.answerQuestion(currentRoomCode, idx);
+                qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
+                btn.classList.add('selected');
+            };
+            qAnswers.appendChild(btn);
+        });
 
         // Handle image
         const imgContainer = document.getElementById('question-image-container');
@@ -301,24 +279,86 @@ const UI = (() => {
             imgContainer.innerHTML = '';
             if (data.imageUrl) {
                 const img = document.createElement('img');
-                img.onload = () => startTimer();
-                img.onerror = () => startTimer(); // Fallback if image fails
+                const notifyReady = () => {
+                    // Tell server we can start countdown now
+                    Network.questionReady(currentRoomCode, activeQuestionId);
+                };
+                img.onload = notifyReady;
+                img.onerror = notifyReady;
                 img.src = data.imageUrl;
                 img.alt = 'Question image';
                 imgContainer.appendChild(img);
                 imgContainer.classList.remove('hidden');
             } else {
                 imgContainer.classList.add('hidden');
-                startTimer();
+                Network.questionReady(currentRoomCode, activeQuestionId);
             }
         } else {
-            startTimer();
+            Network.questionReady(currentRoomCode, activeQuestionId);
         }
+    }
+
+    function startQuestionCountdown(data) {
+        if (!data) return;
+        if (activeQuestionId && data.questionId && activeQuestionId !== data.questionId) return;
+
+        const overlay = document.getElementById('question-overlay');
+        if (overlay.classList.contains('hidden')) return;
+
+        const qAnswers = document.getElementById('question-answers');
+        const timerFill = document.getElementById('question-timer-fill');
+        const timerText = document.getElementById('question-timer-text');
+
+        const timeLimit = Number(data.timeLimit) || 0;
+        const serverTime = Number(data.serverTime) || Date.now();
+        const driftSec = Math.max(0, (Date.now() - serverTime) / 1000);
+        let timeLeft = Math.max(0, timeLimit - driftSec);
+
+        questionCountdownStarted = true;
+
+        // Unlock answers at start
+        qAnswers.querySelectorAll('.answer-btn').forEach(b => {
+            b.classList.remove('locked');
+            b.disabled = false;
+        });
+
+        timerText.textContent = `${timeLeft.toFixed(1)}s`;
+        timerText.style.color = '';
+
+        if (questionTimerInterval) clearInterval(questionTimerInterval);
+        questionTimerInterval = setInterval(() => {
+            timeLeft -= 0.1;
+            if (timeLeft >= 0) {
+                timerText.textContent = `${timeLeft.toFixed(1)}s`;
+                if (timeLeft < 3) timerText.style.color = '#e94560';
+
+                if (timeLeft <= 2) {
+                    qAnswers.querySelectorAll('.answer-btn').forEach(b => {
+                        b.classList.add('locked');
+                        b.disabled = true;
+                    });
+                }
+            } else {
+                clearInterval(questionTimerInterval);
+                timerText.textContent = 'Hết giờ!';
+            }
+            const progress = timeLimit > 0 ? (timeLeft / timeLimit) * 100 : 0;
+            timerFill.style.width = `${Math.max(0, progress)}%`;
+        }, 100);
+
+        timerFill.style.transition = 'none';
+        timerFill.style.width = '100%';
+        requestAnimationFrame(() => {
+            timerFill.style.transition = `width ${Math.max(0, timeLeft)}s linear`;
+            timerFill.style.width = '0%';
+        });
     }
 
     function hideQuestion() {
         if (questionTimerInterval) clearInterval(questionTimerInterval);
         document.getElementById('question-overlay').classList.add('hidden');
+        activeQuestionId = null;
+        questionCountdownStarted = false;
     }
 
     function showQuestionResult(results, correctIndex) {
@@ -412,5 +452,5 @@ const UI = (() => {
         return div.innerHTML;
     }
 
-    return { init, showQuestion, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId };
+    return { init, showQuestion, startQuestionCountdown, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId };
 })();

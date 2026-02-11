@@ -113,6 +113,11 @@
         UI.showQuestion(data);
     });
 
+    // Network event: question countdown starts (after image loaded)
+    Network.on('onQuestionGo', (data) => {
+        UI.startQuestionCountdown(data);
+    });
+
     // Network event: question result
     Network.on('onQuestionResult', (data) => {
         UI.showQuestionResult(data.results, data.correctIndex);

@@ -14,6 +14,7 @@ const CONFIG = {
 
     // Questions
     questionTime: 12,          // seconds to answer
+    questionImageMaxWait: 13,  // seconds to wait for clients to load image before starting countdown
     correctRewardTime: 2,     // seconds free movement (invincible)
     rewardSpeedMultiplier: 1.2, // 10% speed boost during reward
     questionIntervalMin: 8,  // min seconds between questions

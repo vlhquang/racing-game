@@ -52,6 +52,10 @@ const Network = (() => {
             emitLocal('onQuestionStart', data);
         });
 
+        socket.on('question-go', (data) => {
+            emitLocal('onQuestionGo', data);
+        });
+
         socket.on('question-result', (data) => {
             emitLocal('onQuestionResult', data);
         });
@@ -96,6 +100,10 @@ const Network = (() => {
         socket.emit('answer-question', { roomCode, answerIndex });
     }
 
+    function questionReady(roomCode, questionId) {
+        socket.emit('question-ready', { roomCode, questionId });
+    }
+
     function sendObstacleHit(roomCode, obstacle) {
         socket.emit('obstacle-hit', { roomCode, obstacle });
     }
@@ -104,5 +112,5 @@ const Network = (() => {
         return socket ? socket.id : null;
     }
 
-    return { connect, on, createRoom, joinRoom, startGame, sendInput, answerQuestion, sendObstacleHit, getSocketId };
+    return { connect, on, createRoom, joinRoom, startGame, sendInput, answerQuestion, questionReady, sendObstacleHit, getSocketId };
 })();

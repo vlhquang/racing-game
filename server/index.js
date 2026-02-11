@@ -122,6 +122,12 @@ io.on('connection', (socket) => {
         room.handleAnswer(socket.id, answerIndex);
     });
 
+    socket.on('question-ready', ({ roomCode, questionId }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        room.handleQuestionReady(socket.id, questionId);
+    });
+
     socket.on('disconnect', () => {
         console.log(`Player disconnected: ${socket.id}`);
         // Find and clean up rooms

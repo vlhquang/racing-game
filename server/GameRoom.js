@@ -15,6 +15,9 @@ class GameRoom {
         this.activeQuestion = null;
         this.questionAnswers = new Map();
         this.questionTimer = null;
+        this.questionReadyTimer = null;
+        this.questionReadyPlayers = new Set();
+        this.questionCountdownStarted = false;
 
         // Load config
         this.config = { ...CONFIG };
@@ -52,6 +55,10 @@ class GameRoom {
         if (this.hostId === id) {
             const firstPlayer = this.players.keys().next().value;
             this.hostId = firstPlayer || null;
+        }
+
+        if (this.state === 'QUESTION' && !this.questionCountdownStarted) {
+            this.maybeStartQuestionCountdown();
         }
     }
 
@@ -306,7 +313,9 @@ class GameRoom {
         this.state = 'QUESTION';
         this.activeQuestion = question;
         this.questionAnswers.clear();
-        this.questionStartTime = Date.now();
+        this.questionStartTime = null;
+        this.questionCountdownStarted = false;
+        this.questionReadyPlayers.clear();
 
         if (this.gameLoopInterval) {
             clearInterval(this.gameLoopInterval);
@@ -316,6 +325,7 @@ class GameRoom {
         const timeLimit = this.config.questionTime;
         this.io.to(this.roomCode).emit('question-start', {
             triggeredBy,
+            questionId: question.id,
             question: question.question,
             answers: question.answers,
             imageUrl: question.imageUrl,
@@ -324,13 +334,72 @@ class GameRoom {
 
         this.broadcastState();
 
+        if (this.questionReadyTimer) {
+            clearTimeout(this.questionReadyTimer);
+            this.questionReadyTimer = null;
+        }
+
+        const maxWaitMs = Math.max(0, (this.config.questionImageMaxWait || 0) * 1000);
+        this.questionReadyTimer = setTimeout(() => {
+            this.startQuestionCountdown();
+        }, maxWaitMs);
+    }
+
+    handleQuestionReady(playerId, questionId) {
+        if (this.state !== 'QUESTION' || !this.activeQuestion) return;
+        if (this.questionCountdownStarted) return;
+        if (!this.players.has(playerId)) return;
+        if (questionId && this.activeQuestion.id && questionId !== this.activeQuestion.id) return;
+
+        this.questionReadyPlayers.add(playerId);
+        this.maybeStartQuestionCountdown();
+    }
+
+    maybeStartQuestionCountdown() {
+        if (this.state !== 'QUESTION' || !this.activeQuestion) return;
+        if (this.questionCountdownStarted) return;
+
+        const playerIds = [...this.players.keys()];
+        if (playerIds.length === 0) return;
+
+        const allReady = playerIds.every(id => this.questionReadyPlayers.has(id));
+        if (allReady) {
+            this.startQuestionCountdown();
+        }
+    }
+
+    startQuestionCountdown() {
+        if (this.state !== 'QUESTION' || !this.activeQuestion) return;
+        if (this.questionCountdownStarted) return;
+
+        this.questionCountdownStarted = true;
+        this.questionStartTime = Date.now();
+
+        if (this.questionReadyTimer) {
+            clearTimeout(this.questionReadyTimer);
+            this.questionReadyTimer = null;
+        }
+
+        const timeLimit = this.config.questionTime;
+        this.io.to(this.roomCode).emit('question-go', {
+            questionId: this.activeQuestion.id,
+            timeLimit,
+            serverTime: this.questionStartTime
+        });
+
+        if (this.questionTimer) {
+            clearTimeout(this.questionTimer);
+            this.questionTimer = null;
+        }
+
         this.questionTimer = setTimeout(() => {
             this.resolveQuestion();
-        }, 25000); // 12s base + 13s slack for image loading
+        }, Math.max(0, timeLimit * 1000));
     }
 
     handleAnswer(playerId, answerIndex) {
         if (this.state !== 'QUESTION' || !this.activeQuestion) return;
+        if (!this.questionStartTime) return;
         const timeLimit = this.config.questionTime;
         const elapsed = (Date.now() - this.questionStartTime) / 1000;
         if (elapsed > timeLimit - 2) return;
@@ -339,6 +408,11 @@ class GameRoom {
 
     resolveQuestion() {
         if (!this.activeQuestion) return;
+
+        if (this.questionReadyTimer) {
+            clearTimeout(this.questionReadyTimer);
+            this.questionReadyTimer = null;
+        }
 
         const results = [];
         for (const p of this.players.values()) {
@@ -382,6 +456,9 @@ class GameRoom {
         this.broadcastState();
         this.activeQuestion = null;
         this.questionAnswers.clear();
+        this.questionCountdownStarted = false;
+        this.questionReadyPlayers.clear();
+        this.questionStartTime = null;
 
         setTimeout(() => {
             if (this.state === 'QUESTION') {
@@ -491,6 +568,10 @@ class GameRoom {
         if (this.questionTimer) {
             clearTimeout(this.questionTimer);
             this.questionTimer = null;
+        }
+        if (this.questionReadyTimer) {
+            clearTimeout(this.questionReadyTimer);
+            this.questionReadyTimer = null;
         }
     }
 }
