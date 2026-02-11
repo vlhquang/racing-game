@@ -921,7 +921,12 @@ const PhaserGame = (() => {
                     if (bubbleBurstDone.has(burstKey)) bubbleBurstDone.delete(burstKey);
                 }
 
-                label.setText(p.name || '');
+                const statusBadge = getPlayerStatusBadge(p);
+                if (statusBadge) {
+                    label.setText(`${p.name || ''} ${statusBadge}`);
+                } else {
+                    label.setText(p.name || '');
+                }
                 label.setPosition(x, y - 40);
                 label.setVisible(y > -120 && y < height + 120);
                 car.container.setVisible(y > -120 && y < height + 120);
@@ -991,6 +996,25 @@ const PhaserGame = (() => {
                     maxLife: 0.7
                 });
             }
+        }
+
+        function getPlayerStatusBadge(player) {
+            if (!player || player.status === 'normal') return '';
+            if (player.status === 'stopped') return '🛑';
+            if (player.status === 'spinning') return '🌀';
+            if (player.status === 'rewarded') return '🛡️';
+            if (player.status === 'penalized') {
+                switch (player.effectType) {
+                    case 'stop': return '🛑';
+                    case 'reverse': return '🔄';
+                    case 'spin': return '🌀';
+                    case 'blur': return '👻';
+                    case 'rocket': return '🚀';
+                    case 'bubble': return '🫧';
+                    default: return '⚠️';
+                }
+            }
+            return '';
         }
 
         return { update, hideAll };
@@ -1304,6 +1328,12 @@ const PhaserGame = (() => {
             color: '#f5c518'
         }).setDepth(11).setOrigin(0.5, 0.5);
 
+        const nextQText = s.add.text(0, 0, '', {
+            fontFamily: 'Inter',
+            fontSize: '12px',
+            color: '#ffffff'
+        }).setDepth(11).setOrigin(0.5, 0.5);
+
         const minimap = {
             gfx: s.add.graphics().setDepth(10),
             label1: s.add.text(0, 0, 'FINISH', { fontFamily: 'Inter', fontSize: '8px', color: '#f5c518' }).setDepth(11),
@@ -1315,6 +1345,11 @@ const PhaserGame = (() => {
             bar: s.add.graphics().setDepth(13),
             label: s.add.text(0, 0, '', { fontFamily: 'Outfit', fontSize: '16px', color: '#ffffff' }).setDepth(13),
             time: s.add.text(0, 0, '', { fontFamily: 'Outfit', fontSize: '14px', color: '#ffffff' }).setDepth(13)
+        };
+
+        const penaltyList = {
+            title: s.add.text(0, 0, 'PHẠT', { fontFamily: 'Inter', fontSize: '10px', color: '#f5c518' }).setDepth(11),
+            text: s.add.text(0, 0, '', { fontFamily: 'Inter', fontSize: '10px', color: '#ffffff' }).setDepth(11)
         };
 
         function getPenaltyLabel(effectType) {
@@ -1363,6 +1398,22 @@ const PhaserGame = (() => {
             g.fillStyle(0x000000, 0.6);
             g.fillRoundedRect(w / 2 - 60, 12, 120, 44, 12);
             g.fillRoundedRect(w / 2 - 50, 60, 100, 34, 10);
+            const nextQW = 120;
+            const nextQX = 16;
+            const nextQY = 16;
+            g.fillRoundedRect(nextQX, nextQY, nextQW, 26, 10);
+
+            // Next question timer
+            if (gameState.state === 'RACING' && gameState.questionsUsed < gameState.maxQuestions) {
+                const sec = Math.ceil(Math.max(0, gameState.nextQuestionIn || 0));
+                const text = (sec > 0) ? `❓ ${sec}s` : '❓ READY';
+                nextQText.setText(text);
+                nextQText.setColor(sec > 0 ? '#ffffff' : '#f5c518');
+                nextQText.setPosition(nextQX + nextQW / 2, nextQY + 13);
+                nextQText.setVisible(true);
+            } else {
+                nextQText.setVisible(false);
+            }
 
             // Minimap
             const mapW = 36;
@@ -1402,6 +1453,34 @@ const PhaserGame = (() => {
                     minimap.gfx.lineStyle(2, 0xffffff, 1);
                     minimap.gfx.strokeCircle(dotX, dotY, 6);
                 }
+            }
+
+            // Penalty list under minimap (players currently penalized)
+            const penalized = gameState.players
+                .filter(p => p.status === 'penalized' && p.effectTimer > 0)
+                .map(p => {
+                    const icon = (p.effectType === 'rocket') ? '🚀'
+                        : (p.effectType === 'bubble') ? '🫧'
+                            : (p.effectType === 'spin') ? '🌀'
+                                : (p.effectType === 'blur') ? '👻'
+                                    : (p.effectType === 'reverse') ? '🔄'
+                                        : (p.effectType === 'stop') ? '🛑'
+                                            : '⚠️';
+                    const t = Math.ceil(p.effectTimer);
+                    return `${icon} ${p.name || ''} ${t}s`;
+                });
+
+            if (penalized.length) {
+                const listX = w / 2 - 60;
+                const listY = 100;
+                penaltyList.title.setPosition(listX, listY);
+                penaltyList.text.setPosition(listX, listY + 12);
+                penaltyList.text.setText(penalized.join('\n'));
+                penaltyList.title.setVisible(true);
+                penaltyList.text.setVisible(true);
+            } else {
+                penaltyList.title.setVisible(false);
+                penaltyList.text.setVisible(false);
             }
 
             // Penalty countdown (wrong/no-answer)
@@ -1455,9 +1534,12 @@ const PhaserGame = (() => {
             g.setVisible(false);
             timerText.setVisible(false);
             distText.setVisible(false);
+            nextQText.setVisible(false);
             minimap.gfx.setVisible(false);
             minimap.label1.setVisible(false);
             minimap.label2.setVisible(false);
+            penaltyList.title.setVisible(false);
+            penaltyList.text.setVisible(false);
             penaltyHud.bg.setVisible(false);
             penaltyHud.bar.setVisible(false);
             penaltyHud.label.setVisible(false);
@@ -1468,9 +1550,12 @@ const PhaserGame = (() => {
             g.setVisible(true);
             timerText.setVisible(true);
             distText.setVisible(true);
+            nextQText.setVisible(true);
             minimap.gfx.setVisible(true);
             minimap.label1.setVisible(true);
             minimap.label2.setVisible(true);
+            penaltyList.title.setVisible(true);
+            penaltyList.text.setVisible(true);
             penaltyHud.bg.setVisible(true);
             penaltyHud.bar.setVisible(true);
             penaltyHud.label.setVisible(true);

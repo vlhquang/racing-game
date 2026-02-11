@@ -164,19 +164,19 @@ class GameRoom {
                 return;
             }
 
-            if (this.questionCooldownTimer > 0) {
-                this.questionCooldownTimer -= dt;
-            }
-
             let maxDistance = 0;
             for (const p of this.players.values()) {
                 if (p.distance > maxDistance) maxDistance = p.distance;
             }
 
-            if (maxDistance >= this.nextObstacleDistance - 600) {
-                // We only spawn Questions now, Deterministic items are handled by client
-                this.spawnQuestionsOnly(this.nextObstacleDistance);
-                this.nextObstacleDistance += 300;
+            const hasPenalty = [...this.players.values()].some(p => p.status === 'penalized');
+            if (!hasPenalty && this.questionCooldownTimer > 0) {
+                this.questionCooldownTimer -= dt;
+            }
+
+            // Spawn question when cooldown reaches ready (no distance gate)
+            if (!hasPenalty && this.questionCooldownTimer <= 0) {
+                this.spawnQuestionsOnly(maxDistance);
             }
 
             for (const p of this.players.values()) {
@@ -245,46 +245,43 @@ class GameRoom {
             !this.obstacles.some(o => o.type === 'question' && o.active);
 
         if (canSpawnQuestion) {
-            const spawnRand = Math.random();
-            if (spawnRand < 0.4) {
-                const spawnOffset = (this.config.questionSpawnOffset !== undefined)
-                    ? this.config.questionSpawnOffset
-                    : 150;
+            const spawnOffset = (this.config.questionSpawnOffset !== undefined)
+                ? this.config.questionSpawnOffset
+                : 150;
 
-                const laneBlocked = new Set();
-                try {
-                    // Avoid lanes occupied by deterministic obstacles in adjacent rows
-                    const prevRow = atDistance;
-                    const nextRow = atDistance + 300;
-                    for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
-                    for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
-                } catch (e) {
-                    // If seed not ready for any reason, fall back to random lane
-                }
-
-                const allLanes = Array.from({ length: laneCount }, (_, i) => i);
-                let candidates = allLanes.filter(l => !laneBlocked.has(l));
-                if (candidates.length === 0) {
-                    // Relax: only avoid current row
-                    const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(atDistance, laneCount));
-                    candidates = allLanes.filter(l => !prevRowBlocked.has(l));
-                }
-                if (candidates.length === 0) candidates = allLanes;
-
-                const lane = candidates[Math.floor(Math.random() * candidates.length)];
-                this.obstacles.push({
-                    id: 'q_' + Math.random().toString(36).substr(2, 5),
-                    type: 'question',
-                    lane,
-                    distance: atDistance + spawnOffset,
-                    active: true
-                });
-
-                this.questionCooldownTimer = this.config.questionIntervalMin +
-                    Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
-
-                console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned.`);
+            const laneBlocked = new Set();
+            try {
+                // Avoid lanes occupied by deterministic obstacles in adjacent rows
+                const prevRow = atDistance;
+                const nextRow = atDistance + 300;
+                for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
+                for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
+            } catch (e) {
+                // If seed not ready for any reason, fall back to random lane
             }
+
+            const allLanes = Array.from({ length: laneCount }, (_, i) => i);
+            let candidates = allLanes.filter(l => !laneBlocked.has(l));
+            if (candidates.length === 0) {
+                // Relax: only avoid current row
+                const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(atDistance, laneCount));
+                candidates = allLanes.filter(l => !prevRowBlocked.has(l));
+            }
+            if (candidates.length === 0) candidates = allLanes;
+
+            const lane = candidates[Math.floor(Math.random() * candidates.length)];
+            this.obstacles.push({
+                id: 'q_' + Math.random().toString(36).substr(2, 5),
+                type: 'question',
+                lane,
+                distance: atDistance + spawnOffset,
+                active: true
+            });
+
+            this.questionCooldownTimer = this.config.questionIntervalMin +
+                Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
+
+            console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned.`);
         }
     }
 
