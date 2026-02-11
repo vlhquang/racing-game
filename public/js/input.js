@@ -96,14 +96,29 @@ const Input = (() => {
         if (!surface) return;
 
         if (isMobile) {
-            // Tap left/right empty side of the road to move
+            // Touch-and-hold on left/right side to keep shifting lanes
+            let activeDir = null;
             surface.addEventListener('touchstart', (e) => {
                 const touch = e.touches[0];
                 const rect = surface.getBoundingClientRect();
                 const x = touch.clientX - rect.left;
-                if (x < rect.width / 2) onLeft();
-                else onRight();
+                activeDir = (x < rect.width / 2) ? 'left' : 'right';
+                if (activeDir === 'left') {
+                    onLeft();
+                    leftInterval = setInterval(onLeft, HOLD_RATE);
+                } else {
+                    onRight();
+                    rightInterval = setInterval(onRight, HOLD_RATE);
+                }
             }, { passive: true });
+
+            const stopHold = () => {
+                activeDir = null;
+                clearInterval(leftInterval);
+                clearInterval(rightInterval);
+            };
+            surface.addEventListener('touchend', stopHold, { passive: true });
+            surface.addEventListener('touchcancel', stopHold, { passive: true });
         } else {
             // Swipe detection on game surface (desktop)
             let touchStartX = 0;

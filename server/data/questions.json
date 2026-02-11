@@ -1,1122 +1,960 @@
 [
-    {
-        "id": 1,
-        "question": "1 + 1 = ?",
-        "answers": [
-            "1",
-            "2",
-            "3",
-            "4"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 2,
-        "question": "2 + 3 = ?",
-        "answers": [
-            "4",
-            "5",
-            "6",
-            "7"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 3,
-        "question": "5 - 2 = ?",
-        "answers": [
-            "2",
-            "3",
-            "4",
-            "5"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 4,
-        "question": "4 + 4 = ?",
-        "answers": [
-            "7",
-            "8",
-            "9",
-            "10"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 5,
-        "question": "9 - 3 = ?",
-        "answers": [
-            "5",
-            "6",
-            "7",
-            "4"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 6,
-        "question": "7 + 2 = ?",
-        "answers": [
-            "8",
-            "9",
-            "10",
-            "11"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 7,
-        "question": "6 - 4 = ?",
-        "answers": [
-            "1",
-            "2",
-            "3",
-            "0"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 8,
-        "question": "3 + 6 = ?",
-        "answers": [
-            "8",
-            "9",
-            "10",
-            "7"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 9,
-        "question": "8 - 5 = ?",
-        "answers": [
-            "2",
-            "3",
-            "4",
-            "1"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 10,
-        "question": "10 - 7 = ?",
-        "answers": [
-            "2",
-            "3",
-            "4",
-            "5"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 11,
-        "question": "5 + 5 = ?",
-        "answers": [
-            "9",
-            "10",
-            "11",
-            "12"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 12,
-        "question": "4 - 3 = ?",
-        "answers": [
-            "0",
-            "1",
-            "2",
-            "3"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 13,
-        "question": "2 + 7 = ?",
-        "answers": [
-            "8",
-            "9",
-            "10",
-            "11"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 14,
-        "question": "6 + 3 = ?",
-        "answers": [
-            "8",
-            "9",
-            "10",
-            "7"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 15,
-        "question": "9 - 5 = ?",
-        "answers": [
-            "3",
-            "4",
-            "5",
-            "6"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 16,
-        "question": "8 + 2 = ?",
-        "answers": [
-            "9",
-            "10",
-            "11",
-            "0"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 17,
-        "question": "7 - 5 = ?",
-        "answers": [
-            "1",
-            "2",
-            "3",
-            "4"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 18,
-        "question": "3 + 5 = ?",
-        "answers": [
-            "7",
-            "8",
-            "9",
-            "6"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 19,
-        "question": "10 - 2 = ?",
-        "answers": [
-            "7",
-            "8",
-            "9",
-            "6"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 20,
-        "question": "5 + 4 = ?",
-        "answers": [
-            "8",
-            "9",
-            "10",
-            "7"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 21,
-        "question": "Điền dấu thích hợp: 25 ... 42",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 22,
-        "question": "Điền dấu thích hợp: 56 ... 31",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 23,
-        "question": "Điền dấu thích hợp: 88 ... 88",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 24,
-        "question": "Điền dấu thích hợp: 12 ... 21",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 25,
-        "question": "Điền dấu thích hợp: 47 ... 47",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 26,
-        "question": "Điền dấu thích hợp: 90 ... 89",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 27,
-        "question": "Điền dấu thích hợp: 15 ... 51",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 28,
-        "question": "Điền dấu thích hợp: 63 ... 36",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 29,
-        "question": "Điền dấu thích hợp: 74 ... 74",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 30,
-        "question": "Điền dấu thích hợp: 33 ... 44",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 31,
-        "question": "Điền dấu thích hợp: 10 ... 9",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 32,
-        "question": "Điền dấu thích hợp: 5 ... 15",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 33,
-        "question": "Điền dấu thích hợp: 99 ... 100",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 34,
-        "question": "Điền dấu thích hợp: 22 ... 22",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 35,
-        "question": "Điền dấu thích hợp: 81 ... 18",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 36,
-        "question": "Điền dấu thích hợp: 40 ... 30",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 37,
-        "question": "Điền dấu thích hợp: 14 ... 41",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 38,
-        "question": "Điền dấu thích hợp: 55 ... 55",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 39,
-        "question": "Điền dấu thích hợp: 67 ... 76",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 40,
-        "question": "Điền dấu thích hợp: 12 ... 11",
-        "answers": [
-            ">",
-            "<",
-            "=",
-            "Không biết"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 41,
-        "question": "Tìm số còn thiếu: 5, 10, 15, ..., 25",
-        "answers": [
-            "16",
-            "20",
-            "21",
-            "24"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 42,
-        "question": "Tìm số còn thiếu: 2, 4, 6, ..., 10",
-        "answers": [
-            "7",
-            "8",
-            "9",
-            "5"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 43,
-        "question": "Tìm số còn thiếu: 10, 20, ..., 40, 50",
-        "answers": [
-            "25",
-            "30",
-            "35",
-            "45"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 44,
-        "question": "Tìm số còn thiếu: 1, 3, 5, ..., 9",
-        "answers": [
-            "6",
-            "7",
-            "8",
-            "4"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 45,
-        "question": "Tìm số còn thiếu: 100, 90, 80, ..., 60",
-        "answers": [
-            "75",
-            "70",
-            "65",
-            "85"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 46,
-        "question": "Tìm số còn thiếu: 11, 22, 33, ..., 55",
-        "answers": [
-            "40",
-            "44",
-            "45",
-            "46"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 47,
-        "question": "Tìm số còn thiếu: 5, 15, 25, ..., 45",
-        "answers": [
-            "30",
-            "35",
-            "40",
-            "50"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 48,
-        "question": "Tìm số còn thiếu: 8, 16, 24, ..., 40",
-        "answers": [
-            "30",
-            "32",
-            "34",
-            "36"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 49,
-        "question": "Tìm số còn thiếu: 3, 6, 9, ..., 15",
-        "answers": [
-            "10",
-            "12",
-            "13",
-            "14"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 50,
-        "question": "Tìm số còn thiếu: 20, 18, 16, ..., 12",
-        "answers": [
-            "15",
-            "14",
-            "13",
-            "11"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 51,
-        "question": "Tìm số còn thiếu: 7, 14, 21, ..., 35",
-        "answers": [
-            "25",
-            "28",
-            "30",
-            "32"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 52,
-        "question": "Tìm số còn thiếu: 4, 8, 12, ..., 20",
-        "answers": [
-            "14",
-            "16",
-            "18",
-            "22"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 53,
-        "question": "Tìm số còn thiếu: 50, 45, 40, ..., 30",
-        "answers": [
-            "37",
-            "35",
-            "33",
-            "42"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 54,
-        "question": "Tìm số còn thiếu: 1, 4, 7, ..., 13",
-        "answers": [
-            "9",
-            "10",
-            "11",
-            "8"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 55,
-        "question": "Tìm số còn thiếu: 10, 13, 16, ..., 22",
-        "answers": [
-            "18",
-            "19",
-            "20",
-            "17"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 56,
-        "question": "Tìm số còn thiếu: 80, 70, 60, ..., 40",
-        "answers": [
-            "55",
-            "50",
-            "45",
-            "65"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 57,
-        "question": "Tìm số còn thiếu: 25, 30, 35, ..., 45",
-        "answers": [
-            "38",
-            "40",
-            "42",
-            "44"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 58,
-        "question": "Tìm số còn thiếu: 12, 14, 16, ..., 20",
-        "answers": [
-            "17",
-            "18",
-            "19",
-            "15"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 59,
-        "question": "Tìm số còn thiếu: 9, 18, 27, ..., 45",
-        "answers": [
-            "30",
-            "36",
-            "38",
-            "40"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 60,
-        "question": "Tìm số còn thiếu: 30, 25, 20, ..., 10",
-        "answers": [
-            "18",
-            "15",
-            "12",
-            "22"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 61,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Truyện tranh",
-            "Chuyện tranh",
-            "Truyện chanh",
-            "Chuyện chanh"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 62,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Sáng sủa",
-            "Xáng xủa",
-            "Sáng xủa",
-            "Xáng sủa"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 63,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Gia đình",
-            "Da đình",
-            "Ra đình",
-            "Ja đình"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 64,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Trung thực",
-            "Chung thực",
-            "Trung thục",
-            "Chung thục"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 65,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Để dành",
-            "Để giành",
-            "Để rành",
-            "Để dạnh"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 66,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Giành giật",
-            "Dành dật",
-            "Giành dật",
-            "Dành giật"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 67,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Che chở",
-            "Tre trở",
-            "Che trở",
-            "Tre chở"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 68,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Nghỉ ngơi",
-            "Nghĩ ngơi",
-            "Nghỉ nghơi",
-            "Nghĩ nghơi"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 69,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Suối reo",
-            "Xuối reo",
-            "Suối deo",
-            "Xuối deo"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 70,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Rạng rỡ",
-            "Dạng dỡ",
-            "Giạng giỡ",
-            "Rạng dỡ"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 71,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Con hươu",
-            "Con hưu",
-            "Con hiêu",
-            "Con hươu"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 72,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Xanh xao",
-            "Sanh sao",
-            "Xanh sao",
-            "Sanh xao"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 73,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Bánh chưng",
-            "Bánh trưng",
-            "Bánh chưng",
-            "Bánh trưng"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 74,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Cây tre",
-            "Cây che",
-            "Cây tre",
-            "Cây che"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 75,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Giúp đỡ",
-            "Dúp đỡ",
-            "Giúp dỡ",
-            "Dúp dỡ"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 76,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Vui vẻ",
-            "Vui xẻ",
-            "Vui vẻ",
-            "Vui sẻ"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 77,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Suất sắc",
-            "Xuất sắc",
-            "Suất sức",
-            "Xuất sức"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 78,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Trân trọng",
-            "Chân trọng",
-            "Trân trọng",
-            "Chân trọng"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 79,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Sơn trà",
-            "Xơn trà",
-            "Sơn chà",
-            "Xơn chà"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 80,
-        "question": "Từ nào viết đúng chính tả?",
-        "answers": [
-            "Hoa phượng",
-            "Hoa phuợng",
-            "Hoa phượng",
-            "Hoa phuợng"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 81,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/apple.png",
-        "answers": [
-            "Apple",
-            "Banana",
-            "Orange",
-            "Grape"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 82,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/dog.png",
-        "answers": [
-            "Cat",
-            "Dog",
-            "Bird",
-            "Fish"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 83,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/cat.png",
-        "answers": [
-            "Dog",
-            "Cat",
-            "Mouse",
-            "Lion"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 84,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/banana.png",
-        "answers": [
-            "Apple",
-            "Orange",
-            "Banana",
-            "Mango"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 85,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/car--v1.png",
-        "answers": [
-            "Bus",
-            "Bike",
-            "Car",
-            "Plane"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 86,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/airplane-mode-on.png",
-        "answers": [
-            "Ship",
-            "Car",
-            "Train",
-            "Plane"
-        ],
-        "correctIndex": 3
-    },
-    {
-        "id": 87,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/sun--v1.png",
-        "answers": [
-            "Moon",
-            "Star",
-            "Sun",
-            "Cloud"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 88,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/moon-symbol.png",
-        "answers": [
-            "Sun",
-            "Moon",
-            "Earth",
-            "Mars"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 89,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/fish.png",
-        "answers": [
-            "Bird",
-            "Fish",
-            "Crab",
-            "Shark"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 90,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/bird.png",
-        "answers": [
-            "Bird",
-            "Bat",
-            "Bee",
-            "Owl"
-        ],
-        "correctIndex": 0
-    },
-    {
-        "id": 91,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/strawberry.png",
-        "answers": [
-            "Cherry",
-            "Strawberry",
-            "Berry",
-            "Peach"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 92,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/watermelon.png",
-        "answers": [
-            "Melon",
-            "Watermelon",
-            "Pumpkin",
-            "Grape"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 93,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/elephant.png",
-        "answers": [
-            "Tiger",
-            "Lion",
-            "Elephant",
-            "Giraffe"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 94,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/lion.png",
-        "answers": [
-            "Tiger",
-            "Lion",
-            "Cat",
-            "Dog"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 95,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/bicycle.png",
-        "answers": [
-            "Car",
-            "Bus",
-            "Bike",
-            "Train"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 96,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/school-bus.png",
-        "answers": [
-            "Car",
-            "Bus",
-            "Truck",
-            "Taxi"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 97,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/pencil.png",
-        "answers": [
-            "Pen",
-            "Pencil",
-            "Eraser",
-            "Ruler"
-        ],
-        "correctIndex": 1
-    },
-    {
-        "id": 98,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/book.png",
-        "answers": [
-            "Paper",
-            "Notebook",
-            "Book",
-            "Pen"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 99,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/umbrella.png",
-        "answers": [
-            "Coat",
-            "Hat",
-            "Umbrella",
-            "Boot"
-        ],
-        "correctIndex": 2
-    },
-    {
-        "id": 100,
-        "question": "This is a/an ...",
-        "imageUrl": "https://img.icons8.com/color/200/football.png",
-        "answers": [
-            "Basketball",
-            "Football",
-            "Tennis",
-            "Golf"
-        ],
-        "correctIndex": 1
-    }
+  {
+    "id": 1,
+    "question": "1 + 1 = ?",
+    "answers": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 2,
+    "question": "2 + 3 = ?",
+    "answers": [
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 3,
+    "question": "5 - 2 = ?",
+    "answers": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 4,
+    "question": "4 + 4 = ?",
+    "answers": [
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 5,
+    "question": "9 - 3 = ?",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "4"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 6,
+    "question": "7 + 2 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 7,
+    "question": "6 - 4 = ?",
+    "answers": [
+      "1",
+      "2",
+      "3",
+      "0"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 8,
+    "question": "3 + 6 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "7"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 9,
+    "question": "8 - 5 = ?",
+    "answers": [
+      "2",
+      "3",
+      "4",
+      "1"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 10,
+    "question": "10 - 7 = ?",
+    "answers": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 11,
+    "question": "5 + 5 = ?",
+    "answers": [
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 12,
+    "question": "4 - 3 = ?",
+    "answers": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 13,
+    "question": "2 + 7 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 14,
+    "question": "6 + 3 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "7"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 15,
+    "question": "9 - 5 = ?",
+    "answers": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 16,
+    "question": "8 + 2 = ?",
+    "answers": [
+      "9",
+      "10",
+      "11",
+      "0"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 17,
+    "question": "7 - 5 = ?",
+    "answers": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 18,
+    "question": "3 + 5 = ?",
+    "answers": [
+      "7",
+      "8",
+      "9",
+      "6"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 19,
+    "question": "10 - 2 = ?",
+    "answers": [
+      "7",
+      "8",
+      "9",
+      "6"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 20,
+    "question": "5 + 4 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "7"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 21,
+    "question": "Điền dấu thích hợp: 25 ... 42",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 22,
+    "question": "Điền dấu thích hợp: 56 ... 31",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 23,
+    "question": "Điền dấu thích hợp: 88 ... 88",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 24,
+    "question": "Điền dấu thích hợp: 12 ... 21",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 25,
+    "question": "Điền dấu thích hợp: 47 ... 47",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 26,
+    "question": "Điền dấu thích hợp: 90 ... 89",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 27,
+    "question": "Điền dấu thích hợp: 15 ... 51",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 28,
+    "question": "Điền dấu thích hợp: 63 ... 36",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 29,
+    "question": "Điền dấu thích hợp: 74 ... 74",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 30,
+    "question": "Điền dấu thích hợp: 33 ... 44",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 31,
+    "question": "Điền dấu thích hợp: 10 ... 9",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 32,
+    "question": "Điền dấu thích hợp: 5 ... 15",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 33,
+    "question": "Điền dấu thích hợp: 99 ... 100",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 34,
+    "question": "Điền dấu thích hợp: 22 ... 22",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 35,
+    "question": "Điền dấu thích hợp: 81 ... 18",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 36,
+    "question": "Điền dấu thích hợp: 40 ... 30",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 37,
+    "question": "Điền dấu thích hợp: 14 ... 41",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 38,
+    "question": "Điền dấu thích hợp: 55 ... 55",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 39,
+    "question": "Điền dấu thích hợp: 67 ... 76",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 40,
+    "question": "Điền dấu thích hợp: 12 ... 11",
+    "answers": [
+      ">",
+      "<",
+      "=",
+      "Không biết"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 41,
+    "question": "Tìm số còn thiếu: 5, 10, 15, ..., 25",
+    "answers": [
+      "16",
+      "20",
+      "21",
+      "24"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 42,
+    "question": "Tìm số còn thiếu: 2, 4, 6, ..., 10",
+    "answers": [
+      "7",
+      "8",
+      "9",
+      "5"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 43,
+    "question": "Tìm số còn thiếu: 10, 20, ..., 40, 50",
+    "answers": [
+      "25",
+      "30",
+      "35",
+      "45"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 44,
+    "question": "Tìm số còn thiếu: 1, 3, 5, ..., 9",
+    "answers": [
+      "6",
+      "7",
+      "8",
+      "4"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 45,
+    "question": "Tìm số còn thiếu: 100, 90, 80, ..., 60",
+    "answers": [
+      "75",
+      "70",
+      "65",
+      "85"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 46,
+    "question": "Tìm số còn thiếu: 11, 22, 33, ..., 55",
+    "answers": [
+      "40",
+      "44",
+      "45",
+      "46"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 47,
+    "question": "Tìm số còn thiếu: 5, 15, 25, ..., 45",
+    "answers": [
+      "30",
+      "35",
+      "40",
+      "50"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 48,
+    "question": "Tìm số còn thiếu: 8, 16, 24, ..., 40",
+    "answers": [
+      "30",
+      "32",
+      "34",
+      "36"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 49,
+    "question": "Tìm số còn thiếu: 3, 6, 9, ..., 15",
+    "answers": [
+      "10",
+      "12",
+      "13",
+      "14"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 50,
+    "question": "Tìm số còn thiếu: 20, 18, 16, ..., 12",
+    "answers": [
+      "15",
+      "14",
+      "13",
+      "11"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 51,
+    "question": "Tìm số còn thiếu: 7, 14, 21, ..., 35",
+    "answers": [
+      "25",
+      "28",
+      "30",
+      "32"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 52,
+    "question": "Tìm số còn thiếu: 4, 8, 12, ..., 20",
+    "answers": [
+      "14",
+      "16",
+      "18",
+      "22"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 53,
+    "question": "Tìm số còn thiếu: 50, 45, 40, ..., 30",
+    "answers": [
+      "37",
+      "35",
+      "33",
+      "42"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 54,
+    "question": "Tìm số còn thiếu: 1, 4, 7, ..., 13",
+    "answers": [
+      "9",
+      "10",
+      "11",
+      "8"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 55,
+    "question": "Tìm số còn thiếu: 10, 13, 16, ..., 22",
+    "answers": [
+      "18",
+      "19",
+      "20",
+      "17"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 56,
+    "question": "Tìm số còn thiếu: 80, 70, 60, ..., 40",
+    "answers": [
+      "55",
+      "50",
+      "45",
+      "65"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 57,
+    "question": "Tìm số còn thiếu: 25, 30, 35, ..., 45",
+    "answers": [
+      "38",
+      "40",
+      "42",
+      "44"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 58,
+    "question": "Tìm số còn thiếu: 12, 14, 16, ..., 20",
+    "answers": [
+      "17",
+      "18",
+      "19",
+      "15"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 59,
+    "question": "Tìm số còn thiếu: 9, 18, 27, ..., 45",
+    "answers": [
+      "30",
+      "36",
+      "38",
+      "40"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 60,
+    "question": "Tìm số còn thiếu: 30, 25, 20, ..., 10",
+    "answers": [
+      "18",
+      "15",
+      "12",
+      "22"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 61,
+    "question": "Từ nào viết đúng chính tả?",
+    "answers": [
+      "Truyện tranh",
+      "Chuyện tranh",
+      "Truyện chanh",
+      "Chuyện chanh"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 81,
+    "question": "This is a/an ...",
+    "imageUrl": "https://img.icons8.com/color/200/apple.png",
+    "answers": [
+      "Apple",
+      "Banana",
+      "Orange",
+      "Grape"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 82,
+    "question": "7 + 8 = ?",
+    "answers": [
+      "14",
+      "15",
+      "16",
+      "13"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 83,
+    "question": "16 - 9 = ?",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 84,
+    "question": "5 + ? = 12",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 85,
+    "question": "18 - ? = 10",
+    "answers": [
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 86,
+    "question": "9 + 6 - 5 = ?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 87,
+    "question": "So sánh 14 và 41",
+    "answers": [
+      "14 > 41",
+      "14 < 41",
+      "14 = 41",
+      "Không so sánh được"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 88,
+    "question": "Số liền sau 19 là số nào?",
+    "answers": [
+      "18",
+      "19",
+      "20",
+      "21"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 89,
+    "question": "Số liền trước 30 là số nào?",
+    "answers": [
+      "28",
+      "29",
+      "30",
+      "31"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 90,
+    "question": "3 chục 4 đơn vị là số nào?",
+    "answers": [
+      "30",
+      "34",
+      "43",
+      "40"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 91,
+    "question": "2 chục 7 đơn vị là số nào?",
+    "answers": [
+      "20",
+      "27",
+      "72",
+      "17"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 92,
+    "question": "4 + 4 + 4 = ?",
+    "answers": [
+      "10",
+      "11",
+      "12",
+      "13"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 93,
+    "question": "Gấp đôi của 7 là?",
+    "answers": [
+      "12",
+      "13",
+      "14",
+      "15"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 94,
+    "question": "Từ nào đồng nghĩa với \"nhanh\"?",
+    "answers": [
+      "mau",
+      "chậm",
+      "lâu",
+      "trễ"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 95,
+    "question": "Chọn tiếng có vần \"an\"",
+    "answers": [
+      "lan",
+      "len",
+      "lin",
+      "lên"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 96,
+    "question": "Chọn từ đúng chính tả",
+    "answers": [
+      "nghỉ học",
+      "ngĩ học",
+      "ngỷ học",
+      "nghĩa học"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 97,
+    "question": "Câu nào là câu hỏi?",
+    "answers": [
+      "Bạn đi đâu?",
+      "Em đi học.",
+      "Trời nắng.",
+      "Cả lớp im lặng."
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 98,
+    "question": "Từ nào chỉ đồ dùng học tập?",
+    "answers": [
+      "bút",
+      "chim",
+      "cá",
+      "mưa"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": 99,
+    "question": "Sắp xếp thành câu đúng: (sáng / mai / em / đi / học)",
+    "answers": [
+      "Em đi học sáng mai.",
+      "Sáng mai em đi học.",
+      "Mai sáng học em đi.",
+      "Đi học em sáng mai."
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 100,
+    "question": "Từ trái nghĩa của \"cao\" là?",
+    "answers": [
+      "dài",
+      "thấp",
+      "rộng",
+      "to"
+    ],
+    "correctIndex": 1
+  },
+  {
+    "id": 101,
+    "question": "Một tuần có mấy ngày?",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 102,
+    "question": "Một chục là bao nhiêu?",
+    "answers": [
+      "8",
+      "9",
+      "10",
+      "12"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 103,
+    "question": "10 + 9 = ?",
+    "answers": [
+      "17",
+      "18",
+      "19",
+      "20"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 104,
+    "question": "15 - 7 = ?",
+    "answers": [
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "correctIndex": 2
+  },
+  {
+    "id": 105,
+    "question": "Số lớn hơn 35 là?",
+    "answers": [
+      "32",
+      "34",
+      "35",
+      "36"
+    ],
+    "correctIndex": 3
+  },
+  {
+    "id": 106,
+    "question": "Chọn từ đúng: \"... em đang học\"",
+    "answers": [
+      "Chúng",
+      "Chún",
+      "Chúngn",
+      "Chúngg"
+    ],
+    "correctIndex": 0
+  }
 ]

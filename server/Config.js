@@ -1,75 +1,69 @@
 const CONFIG = {
-    // Game Settings
+    // Cấu hình chung
     maxPlayers: 4,
-    raceDuration: 120,        // seconds
-    baseSpeed: 300,           // pixels/sec
-    laneWidth: 80,            // pixels
+    raceDuration: 120,        // thời lượng đua (giây)
+    baseSpeed: 300,           // tốc độ cơ bản (px/giây)
+    laneWidth: 80,            // độ rộng mỗi làn (px)
 
-    // Obstacles
-    stoneStopTime: 1.0,         // seconds
-    oilSpinTime: 1.5,           // seconds
-    obstacleSpawnInterval: 0.8, // default spawn interval
-    minObstacleGap: 200,        // min distance between obstacles
-    initialObstacleDelay: 3.0,  // seconds before first obstacles appear
+    // Chướng ngại vật
+    stoneStopTime: 1.0,         // thời gian dừng khi dính đá (giây)
+    oilSpinTime: 1.5,           // thời gian xoay khi dính dầu (giây)
+    initialObstacleDelay: 3.0,  // độ trễ trước khi chướng ngại vật xuất hiện (giây)
 
-    // Questions
-    questionTime: 15,          // seconds to answer
-    questionImageMaxWait: 8,  // seconds to wait for clients to load image before starting countdown
-    questionSpawnOffset: 100,  // pixels after row distance to spawn question (best at mid-gap between deterministic rows)
-    correctRewardTime: 2,     // seconds free movement (invincible)
-    rewardSpeedMultiplier: 1.3, // 10% speed boost during reward
-    questionIntervalMin: 8,  // min seconds between questions
-    questionIntervalMax: 15,  // max seconds between questions
-    maxQuestions: 100,           // per game
+    // Câu hỏi
+    questionTime: 15,          // thời gian trả lời (giây)
+    questionImageMaxWait: 8,  // thời gian chờ tải ảnh trước khi đếm ngược (giây)
+    questionSpawnOffset: 100,  // khoảng cách cộng thêm để spawn hộp câu hỏi (px)
+    correctRewardTime: 2,     // thời gian miễn nhiễm khi trả lời đúng (giây)
+    rewardSpeedMultiplier: 1.3, // hệ số tăng tốc khi được thưởng
+    questionIntervalMin: 8,  // thời gian tối thiểu giữa các câu hỏi (giây)
+    questionIntervalMax: 15,  // thời gian tối đa giữa các câu hỏi (giây)
+    maxQuestions: 100,           // số câu hỏi tối đa mỗi ván
 
-    // Penalty Configuration
+    // Cấu hình phạt
     penalties: {
-        // Shared penalty types
+        // Các loại phạt
         types: {
             stop: {
-                duration: 3.0,
-                speedMultiplier: 0.0
+                duration: 3.0,        // thời gian phạt (giây)
+                speedMultiplier: 0.0  // hệ số tốc độ khi bị phạt
             },
-            // slow: {
-            //     duration: 3.0,
-            //     speedMultiplier: 0.4 // Reduces speed to 40%
-            // },
             reverse: {
                 duration: 4.0,
-                speedMultiplier: 1.0 // Normal speed, just reversed controls
+                speedMultiplier: 1.0 // tốc độ giữ nguyên, đảo điều khiển
             },
             spin: {
                 duration: 2.0,
-                speedMultiplier: 0.1 // Reduces speed to 10%
+                speedMultiplier: 0.1 // giảm còn 10% tốc độ
             },
             blur: {
                 duration: 5.0,
-                speedMultiplier: 1.0, // Normal speed
-                opacity: 1          // 80% blur opacity
+                speedMultiplier: 1.0, // tốc độ giữ nguyên
+                opacity: 1          // độ mờ màn hình
             },
             rocket: {
                 duration: 3.0,
                 speedMultiplier: 0.0,
-                wrongDuration: 3.0,
-                noAnswerDuration: 3.0
+                wrongDuration: 3.0,   // thời gian phạt khi trả lời sai
+                noAnswerDuration: 3.0 // thời gian phạt khi không trả lời
             },
             bubble: {
                 duration: 3.0,
                 speedMultiplier: 0.0,
-                wrongDuration: 3.0,
-                noAnswerDuration: 3.0
+                wrongDuration: 3.0,   // thời gian phạt khi trả lời sai
+                noAnswerDuration: 3.0 // thời gian phạt khi không trả lời
             }
         },
 
-        // Penalties for WRONG answer
+        // Phạt khi trả lời SAI
         wrongAnswer: {
-            durationMultiplier: 1.0, // Multiplier for base durations above
+            durationMultiplier: 1.0, // hệ số nhân thời gian mặc định
             availableTypes: ['stop', 'reverse', 'spin', 'blur', 'rocket', 'bubble']
         },
 
-        // Penalties for NO answer (timeout)
+        // Phạt khi KHÔNG trả lời (hết giờ)
         noAnswer: {
-            durationMultiplier: 2, // 50% longer duration for ignoring
+            durationMultiplier: 2, // tăng thời gian phạt so với mặc định
             availableTypes: ['stop', 'reverse', 'spin', 'blur', 'rocket', 'bubble']
         }
     }
