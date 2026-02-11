@@ -7,6 +7,7 @@ const PhaserGame = (() => {
     let containerId = null;
     let rendererType = null;
     let webglFallbackInstalled = false;
+    let fallbackInProgress = false;
 
     // Shared state from network
     let gameState = null;
@@ -93,7 +94,7 @@ const PhaserGame = (() => {
             }
         });
 
-        game = new Phaser.Game({
+        const gameConfig = {
             type: rendererType,
             parent: containerId,
             width: window.innerWidth,
@@ -115,7 +116,42 @@ const PhaserGame = (() => {
                 forceSetTimeOut: false
             },
             scene: [RacingScene]
-        });
+        };
+
+        // Some devices throw WebGL framebuffer errors synchronously during boot.
+        try {
+            game = new Phaser.Game(gameConfig);
+        } catch (e) {
+            // Force Canvas and retry once.
+            forceCanvasAndReinit();
+        }
+    }
+
+    function forceCanvasAndReinit() {
+        if (fallbackInProgress) return;
+        fallbackInProgress = true;
+
+        try {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('phaser_force_canvas', '1');
+            }
+        } catch (err) {
+            // ignore
+        }
+
+        try { if (game) game.destroy(true); } catch (e) { }
+        game = null;
+        scene = null;
+
+        // Retry init using Canvas renderer.
+        try {
+            rendererType = Phaser.CANVAS;
+            init(containerId);
+        } catch (e) {
+            // ignore
+        } finally {
+            fallbackInProgress = false;
+        }
     }
 
     function installWebglFallbackOnce() {
@@ -127,26 +163,9 @@ const PhaserGame = (() => {
         window.addEventListener('error', (e) => {
             const msg = (e && e.message) ? String(e.message) : '';
             if (!msg.includes('Framebuffer status: Incomplete Attachment')) return;
-            if (!game) return;
 
-            try {
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.setItem('phaser_force_canvas', '1');
-                }
-            } catch (err) {
-                // ignore
-            }
-
-            try { game.destroy(true); } catch (err) { }
-            game = null;
-            scene = null;
-
-            // Re-init using Canvas renderer.
-            try {
-                init(containerId);
-            } catch (err) {
-                // ignore
-            }
+            // Handle both sync-boot (game not assigned yet) and async runtime errors.
+            forceCanvasAndReinit();
         }, true);
     }
 
@@ -350,7 +369,22 @@ const PhaserGame = (() => {
         }, 32, 32);
 
         const grass = s.add.tileSprite(0, 0, s.scale.width, s.scale.height, textures['__grass1']).setOrigin(0, 0);
+
+        // Shoulder base + moving rumble strip overlay
+        ensureCanvasTexture(s, '__shoulder_strip', 16, 64, (ctx, w, h) => {
+            ctx.fillStyle = '#d4a843';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.18)';
+            for (let y = 0; y < h; y += 16) {
+                ctx.fillRect(0, y, w, 8);
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.10)';
+            ctx.fillRect(w - 3, 0, 3, h);
+        });
+
         const shoulder = s.add.rectangle(0, 0, 10, s.scale.height, 0xd4a843).setOrigin(0, 0);
+        const leftShoulder = s.add.tileSprite(0, 0, 10, s.scale.height, '__shoulder_strip').setOrigin(0, 0).setAlpha(0.9);
+        const rightShoulder = s.add.tileSprite(0, 0, 10, s.scale.height, '__shoulder_strip').setOrigin(0, 0).setAlpha(0.9);
         const roadRect = s.add.rectangle(0, 0, 10, s.scale.height, 0x505050).setOrigin(0, 0);
         const leftEdge = s.add.rectangle(0, 0, 4, s.scale.height, 0xffffff).setOrigin(0, 0);
         const rightEdge = s.add.rectangle(0, 0, 4, s.scale.height, 0xffffff).setOrigin(0, 0);
@@ -429,6 +463,11 @@ const PhaserGame = (() => {
             shoulder.setPosition(roadX - shoulderW, 0);
             shoulder.setSize(roadWidth + shoulderW * 2, s.scale.height);
 
+            leftShoulder.setPosition(roadX - shoulderW, 0);
+            leftShoulder.setSize(shoulderW, s.scale.height);
+            rightShoulder.setPosition(roadX + roadWidth, 0);
+            rightShoulder.setSize(shoulderW, s.scale.height);
+
             roadRect.setPosition(roadX, 0);
             roadRect.setSize(roadWidth, s.scale.height);
 
@@ -464,13 +503,16 @@ const PhaserGame = (() => {
                 lastLaneCount = laneCount;
             }
 
-            // Make all scrolling elements move same direction.
-            // When distance increases, ground should flow downward.
+            // Make road, lane marks, shoulders, and decor scroll the same
+            // direction and at the same speed.
             const grassStride = 80;
-            grass.tilePositionY = -posMod(distance, grassStride);
+            grass.tilePositionY = posMod(distance, grassStride);
 
             const totalDash = 40 + 30;
-            laneGfx.y = -posMod(distance, totalDash);
+            laneGfx.y = posMod(distance, totalDash);
+
+            leftShoulder.tilePositionY = posMod(distance, 64);
+            rightShoulder.tilePositionY = posMod(distance, 64);
 
             updateDecor(distance, laneCount);
         }
@@ -489,7 +531,8 @@ const PhaserGame = (() => {
             const roadX = (s.scale.width - roadWidth) / 2;
 
             const offset = posMod(distance, decorSpacing);
-            const desired = Math.ceil((s.scale.height + decorSpacing) / decorSpacing) * 2;
+            const numRows = Math.ceil((s.scale.height + decorSpacing * 2) / decorSpacing);
+            const desired = numRows * 2;
 
             while (decorActive.length < desired) {
                 const spr = acquireDecor();
@@ -514,6 +557,9 @@ const PhaserGame = (() => {
                 left.setPosition(leftX, y);
                 right.setPosition(rightX, y + decorSpacing / 2);
 
+                left.setVisible(true);
+                right.setVisible(true);
+
                 left.setScale(isTree ? 0.85 : 1.0);
                 right.setScale(isTree ? 1.0 : 0.85);
 
@@ -524,12 +570,6 @@ const PhaserGame = (() => {
             // Hide any extra pooled sprites
             for (; i < decorActive.length; i++) {
                 decorActive[i].setVisible(false);
-            }
-
-            for (let k = 0; k < decorActive.length; k++) {
-                // Ensure visible for used ones
-                if (decorActive[k].visible === false) continue;
-                decorActive[k].setVisible(true);
             }
         }
 
