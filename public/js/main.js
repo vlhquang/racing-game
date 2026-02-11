@@ -10,9 +10,8 @@
     // Initialize UI
     UI.init();
 
-    // Initialize renderer
-    const canvas = document.getElementById('game-canvas');
-    Renderer.init(canvas);
+    // Initialize Phaser renderer
+    PhaserGame.init('phaser-container');
 
     // Game state
     let gameStarted = false;
@@ -28,11 +27,15 @@
         laneCount = data.laneCount || 3;
         config = data.config || {};
 
+        // New round: clear local hit cache to allow collisions again
+        if (data.count === 3) {
+            localHitObstacles.clear();
+        }
+
         if (!gameStarted) {
             gameStarted = true;
-            console.log('[Client] Initializing renderer and input');
-            Road.init(laneCount, config.laneWidth || 80, canvas.width);
-            Renderer.start(UI.getPlayerId());
+            console.log('[Client] Initializing Phaser renderer and input');
+            PhaserGame.start(UI.getPlayerId());
 
             // Initialize input controls with PREDICTION
             Input.init(
@@ -41,7 +44,7 @@
             );
 
             // Register Client-Side Collision Handler
-            Renderer.setOnHit(handleObstacleHit);
+            PhaserGame.setOnHit(handleObstacleHit);
         }
     });
 
@@ -49,7 +52,7 @@
         if (!gameStarted) return;
 
         // Block input if game is not racing
-        const state = Renderer.getGameState();
+        const state = PhaserGame.getGameState();
         if (!state || state.state !== 'RACING') return;
 
         // Block input if paralyzed
@@ -64,7 +67,7 @@
 
         // Local prediction
         lastInputTime = Date.now();
-        Renderer.predictMove(direction, laneCount);
+        PhaserGame.predictMove(direction, laneCount);
     }
 
     function handleObstacleHit(obstacle) {
@@ -76,11 +79,11 @@
 
         // Instant feedback
         if (obstacle.type === 'stone') {
-            Effects.triggerShake(8, 0.5);
-            Effects.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
+            PhaserGame.triggerShake(8, 0.5);
+            PhaserGame.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
             // We can even locally set status if we want extreme snappiness
         } else if (obstacle.type === 'oil') {
-            Effects.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
+            PhaserGame.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
         }
 
         // Report to server
@@ -93,17 +96,17 @@
 
     // Network event: game state update
     Network.on('onGameState', (data) => {
-        Renderer.setGameState(data, lastInputTime, config);
+        PhaserGame.setGameState(data, lastInputTime, config);
     });
 
     // Network event: obstacle hit (for effects)
     Network.on('onObstacleHit', (data) => {
         if (data.playerId === UI.getPlayerId()) {
             if (data.type === 'stone') {
-                Effects.triggerShake(6, 0.4);
-                Effects.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
+                PhaserGame.triggerShake(6, 0.4);
+                PhaserGame.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
             } else if (data.type === 'oil') {
-                Effects.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
+                PhaserGame.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
             }
         }
     });
@@ -130,7 +133,7 @@
 
     // Network event: game over
     Network.on('onGameOver', (data) => {
-        Renderer.stop();
+        PhaserGame.stop();
         UI.showResults(data.rankings);
     });
 

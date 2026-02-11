@@ -89,10 +89,14 @@ class GameRoom {
     }
 
     startGame() {
-        if (this.state !== 'WAITING') {
+        if (this.state !== 'WAITING' && this.state !== 'FINISHED') {
             console.log(`[GameRoom] Room ${this.roomCode}: Cannot start, state is ${this.state}`);
             return;
         }
+
+        // Ensure no timers from previous run.
+        this.stop();
+
         console.log(`[GameRoom] Room ${this.roomCode}: Countdown initiated`);
         this.state = 'COUNTDOWN';
         this.config.roadWidth = this.getLaneCount() * this.config.laneWidth;

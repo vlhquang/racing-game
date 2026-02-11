@@ -289,11 +289,17 @@ body {
 }
 
 /* ============ GAME CANVAS ============ */
-#game-canvas {
+#phaser-container {
   display: block;
   width: 100%;
   height: 100%;
   background: #2d5a1e;
+}
+
+#phaser-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* ============ OVERLAYS ============ */

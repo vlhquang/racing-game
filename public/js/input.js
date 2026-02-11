@@ -88,18 +88,20 @@ const Input = (() => {
         btnRight.addEventListener('mouseup', () => clearInterval(rightInterval));
         btnRight.addEventListener('mouseleave', () => clearInterval(rightInterval));
 
-        // Swipe detection on canvas
+        // Swipe detection on game surface
         let touchStartX = 0;
         let touchStartY = 0;
-        const canvas = document.getElementById('game-canvas');
+        const surface = document.getElementById('phaser-container') || document.getElementById('game-canvas');
 
-        canvas.addEventListener('touchstart', (e) => {
+        if (!surface) return;
+
+        surface.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
         }, { passive: true });
 
-        canvas.addEventListener('touchend', (e) => {
+        surface.addEventListener('touchend', (e) => {
             const touch = e.changedTouches[0];
             const dx = touch.clientX - touchStartX;
             const dy = touch.clientY - touchStartY;

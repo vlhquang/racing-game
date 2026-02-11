@@ -94,9 +94,13 @@ const UI = (() => {
             });
         });
 
-        // Play again
+        // Play again (host restarts game in same room)
         btnPlayAgain.addEventListener('click', () => {
-            location.reload();
+            if (!currentRoomCode) {
+                location.reload();
+                return;
+            }
+            Network.restartGame(currentRoomCode);
         });
 
         function showError(msg) {
@@ -208,6 +212,8 @@ const UI = (() => {
         console.log('[UI] showGameScreen called - Transitioning to game canvas');
         document.getElementById('lobby-screen').classList.remove('active');
         document.getElementById('lobby-screen').classList.add('hidden');
+        document.getElementById('results-screen').classList.remove('active');
+        document.getElementById('results-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         document.getElementById('game-screen').classList.add('active');
     }
@@ -439,6 +445,18 @@ const UI = (() => {
         document.getElementById('results-screen').classList.remove('hidden');
         document.getElementById('results-screen').classList.add('active');
 
+        // Only host can restart the room.
+        const btnPlayAgain = document.getElementById('btn-play-again');
+        if (btnPlayAgain) {
+            if (isHost) {
+                btnPlayAgain.classList.remove('hidden');
+                btnPlayAgain.disabled = false;
+                btnPlayAgain.textContent = '🔄 Chơi Lại';
+            } else {
+                btnPlayAgain.classList.add('hidden');
+            }
+        }
+
         const list = document.getElementById('rankings-list');
         list.innerHTML = '';
 
@@ -460,6 +478,7 @@ const UI = (() => {
 
     function getRoomCode() { return currentRoomCode; }
     function getPlayerId() { return myPlayerId; }
+    function getIsHost() { return isHost; }
 
     function escapeHtml(str) {
         const div = document.createElement('div');
@@ -467,5 +486,5 @@ const UI = (() => {
         return div.innerHTML;
     }
 
-    return { init, showQuestion, startQuestionCountdown, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId };
+    return { init, showQuestion, startQuestionCountdown, hideQuestion, showQuestionResult, showResults, getRoomCode, getPlayerId, getIsHost };
 })();

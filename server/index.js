@@ -32,6 +32,10 @@ if (fs.existsSync(publicPath)) {
 
 app.use(express.static(publicPath));
 
+// Serve Phaser runtime without copying into public/
+const phaserDistPath = path.join(__dirname, '..', 'node_modules', 'phaser', 'dist');
+app.use('/vendor/phaser', express.static(phaserDistPath));
+
 // Store active rooms
 const rooms = new Map();
 
@@ -101,6 +105,13 @@ io.on('connection', (socket) => {
             return;
         }
         console.log(`[Start] Starting game in room ${roomCode}`);
+        room.startGame();
+    });
+
+    socket.on('restart-game', ({ roomCode }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        if (room.hostId !== socket.id) return;
         room.startGame();
     });
 

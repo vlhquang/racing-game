@@ -92,6 +92,10 @@ const Network = (() => {
         socket.emit('start-game', { roomCode });
     }
 
+    function restartGame(roomCode) {
+        socket.emit('restart-game', { roomCode });
+    }
+
     function sendInput(roomCode, direction) {
         socket.emit('player-input', { roomCode, direction });
     }
@@ -112,5 +116,5 @@ const Network = (() => {
         return socket ? socket.id : null;
     }
 
-    return { connect, on, createRoom, joinRoom, startGame, sendInput, answerQuestion, questionReady, sendObstacleHit, getSocketId };
+    return { connect, on, createRoom, joinRoom, startGame, restartGame, sendInput, answerQuestion, questionReady, sendObstacleHit, getSocketId };
 })();
