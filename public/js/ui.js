@@ -242,67 +242,78 @@ const UI = (() => {
         qText.textContent = data.question;
         qAnswers.innerHTML = '';
 
+        // Timer and Answering logic
+        const startTimer = () => {
+            let timeLeft = data.timeLimit;
+            timerText.textContent = `${timeLeft.toFixed(1)}s`;
+            timerText.style.color = ''; // Reset color
+
+            if (questionTimerInterval) clearInterval(questionTimerInterval);
+            questionTimerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft >= 0) {
+                    timerText.textContent = `${timeLeft.toFixed(1)}s`;
+                    if (timeLeft < 3) timerText.style.color = '#e94560';
+
+                    if (timeLeft <= 2) {
+                        qAnswers.querySelectorAll('.answer-btn').forEach(b => {
+                            b.classList.add('locked');
+                            b.disabled = true;
+                        });
+                    }
+                } else {
+                    clearInterval(questionTimerInterval);
+                    timerText.textContent = "Hết giờ!";
+                }
+                const progress = (timeLeft / data.timeLimit) * 100;
+                timerFill.style.width = `${Math.max(0, progress)}%`;
+            }, 100);
+
+            // Populate answers only when timer starts (to prevent early clicks)
+            qAnswers.innerHTML = '';
+            data.answers.forEach((ans, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = ans;
+                btn.onclick = () => {
+                    if (timeLeft > 2) {
+                        // FIX: Use correctly detected currentRoomCode or pass it from showQuestion
+                        Network.answerQuestion(currentRoomCode, idx);
+                        qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
+                        btn.classList.add('selected');
+                    }
+                };
+                qAnswers.appendChild(btn);
+            });
+
+            // Transition fill
+            timerFill.style.transition = 'none';
+            timerFill.style.width = '100%';
+            requestAnimationFrame(() => {
+                timerFill.style.transition = `width ${data.timeLimit}s linear`;
+                timerFill.style.width = '0%';
+            });
+        };
+
         // Handle image
         const imgContainer = document.getElementById('question-image-container');
         if (imgContainer) {
             imgContainer.innerHTML = '';
             if (data.imageUrl) {
                 const img = document.createElement('img');
+                img.onload = () => startTimer();
+                img.onerror = () => startTimer(); // Fallback if image fails
                 img.src = data.imageUrl;
                 img.alt = 'Question image';
                 imgContainer.appendChild(img);
                 imgContainer.classList.remove('hidden');
             } else {
                 imgContainer.classList.add('hidden');
+                startTimer();
             }
+        } else {
+            startTimer();
         }
-
-        // Timer numerical countdown
-        let timeLeft = data.timeLimit;
-        timerText.textContent = `${timeLeft.toFixed(1)}s`;
-        timerText.style.color = ''; // Reset color
-        if (questionTimerInterval) clearInterval(questionTimerInterval);
-        questionTimerInterval = setInterval(() => {
-            timeLeft -= 0.1;
-            if (timeLeft >= 0) {
-                timerText.textContent = `${timeLeft.toFixed(1)}s`;
-                // Turn red when low time (< 3s)
-                if (timeLeft < 3) {
-                    timerText.style.color = '#e94560';
-                }
-                // LOCK answering when < 2s
-                if (timeLeft <= 2) {
-                    qAnswers.querySelectorAll('.answer-btn').forEach(b => {
-                        b.classList.add('locked');
-                        b.disabled = true;
-                    });
-                }
-            } else {
-                timerText.textContent = "0.0s";
-                clearInterval(questionTimerInterval);
-            }
-        }, 1000 / 10);
-
-        data.answers.forEach((ans, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'answer-btn';
-            btn.textContent = ans;
-            btn.addEventListener('click', () => {
-                // Remove previous selected
-                qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                Network.answerQuestion(currentRoomCode, i);
-            });
-            qAnswers.appendChild(btn);
-        });
-
-        // Timer animation
-        timerFill.style.transition = 'none';
-        timerFill.style.width = '100%';
-        requestAnimationFrame(() => {
-            timerFill.style.transition = `width ${data.timeLimit}s linear`;
-            timerFill.style.width = '0%';
-        });
     }
 
     function hideQuestion() {

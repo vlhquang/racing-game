@@ -324,10 +324,9 @@ class GameRoom {
 
         this.broadcastState();
 
-        const questionTimeLimit = timeLimit * 1000;
         this.questionTimer = setTimeout(() => {
             this.resolveQuestion();
-        }); // 12s base + 13s slack for image loading
+        }, 25000); // 12s base + 13s slack for image loading
     }
 
     handleAnswer(playerId, answerIndex) {
