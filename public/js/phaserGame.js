@@ -1310,6 +1310,33 @@ const PhaserGame = (() => {
             label2: s.add.text(0, 0, 'START', { fontFamily: 'Inter', fontSize: '8px', color: 'rgba(255,255,255,0.6)' }).setDepth(11)
         };
 
+        const penaltyHud = {
+            bg: s.add.graphics().setDepth(12),
+            bar: s.add.graphics().setDepth(13),
+            label: s.add.text(0, 0, '', { fontFamily: 'Outfit', fontSize: '16px', color: '#ffffff' }).setDepth(13),
+            time: s.add.text(0, 0, '', { fontFamily: 'Outfit', fontSize: '14px', color: '#ffffff' }).setDepth(13)
+        };
+
+        function getPenaltyLabel(effectType) {
+            switch (effectType) {
+                case 'stop': return '🛑 DỪNG LẠI!';
+                case 'slow': return '🐌 CHẬM LẠI!';
+                case 'reverse': return '🔄 ĐẢO ĐIỀU KHIỂN!';
+                case 'blur': return '👻 MỜ MÀN HÌNH!';
+                case 'spin': return '🌀 QUAY VÒNG!';
+                case 'rocket': return '🚀 BAY VÒNG!';
+                case 'bubble': return '🫧 BÓNG BÓNG!';
+                default: return '⚠️ PHẠT!';
+            }
+        }
+
+        function getPenaltyMaxTime(effectType) {
+            if (config && config.penalties && config.penalties.types && config.penalties.types[effectType]) {
+                return Number(config.penalties.types[effectType].duration) || 3;
+            }
+            return 3;
+        }
+
         function draw() {
             if (!gameState || !gameState.players) return;
             const w = s.scale.width;
@@ -1376,6 +1403,44 @@ const PhaserGame = (() => {
                     minimap.gfx.strokeCircle(dotX, dotY, 6);
                 }
             }
+
+            // Penalty countdown (wrong/no-answer)
+            if (myPlayer.status === 'penalized' && myPlayer.effectTimer > 0) {
+                const bgW = 220;
+                const bgH = 38;
+                const bgX = w / 2 - bgW / 2;
+                const bgY = h - 130;
+
+                penaltyHud.bg.clear();
+                penaltyHud.bg.fillStyle(0xe94560, 0.85);
+                penaltyHud.bg.fillRoundedRect(bgX, bgY, bgW, bgH, 8);
+
+                const label = getPenaltyLabel(myPlayer.effectType);
+                penaltyHud.label.setText(label);
+                penaltyHud.label.setPosition(bgX + 12, bgY + bgH / 2);
+                penaltyHud.label.setOrigin(0, 0.5);
+
+                const maxTime = Math.max(myPlayer.effectTimer, getPenaltyMaxTime(myPlayer.effectType));
+                const ratio = Math.min(1, myPlayer.effectTimer / maxTime);
+                penaltyHud.bar.clear();
+                penaltyHud.bar.fillStyle(0xffffff, 0.3);
+                penaltyHud.bar.fillRect(bgX + 4, bgY + bgH - 6, (bgW - 8) * ratio, 3);
+
+                const timeLeft = Math.ceil(myPlayer.effectTimer * 10) / 10;
+                penaltyHud.time.setText(`${timeLeft}s`);
+                penaltyHud.time.setPosition(bgX + bgW - 10, bgY + bgH / 2);
+                penaltyHud.time.setOrigin(1, 0.5);
+
+                penaltyHud.bg.setVisible(true);
+                penaltyHud.bar.setVisible(true);
+                penaltyHud.label.setVisible(true);
+                penaltyHud.time.setVisible(true);
+            } else {
+                penaltyHud.bg.setVisible(false);
+                penaltyHud.bar.setVisible(false);
+                penaltyHud.label.setVisible(false);
+                penaltyHud.time.setVisible(false);
+            }
         }
 
         function update(mySmoothDist) {
@@ -1393,6 +1458,10 @@ const PhaserGame = (() => {
             minimap.gfx.setVisible(false);
             minimap.label1.setVisible(false);
             minimap.label2.setVisible(false);
+            penaltyHud.bg.setVisible(false);
+            penaltyHud.bar.setVisible(false);
+            penaltyHud.label.setVisible(false);
+            penaltyHud.time.setVisible(false);
         }
 
         function showAll() {
@@ -1402,6 +1471,10 @@ const PhaserGame = (() => {
             minimap.gfx.setVisible(true);
             minimap.label1.setVisible(true);
             minimap.label2.setVisible(true);
+            penaltyHud.bg.setVisible(true);
+            penaltyHud.bar.setVisible(true);
+            penaltyHud.label.setVisible(true);
+            penaltyHud.time.setVisible(true);
         }
 
         return { update, resize, hideAll, showAll };

@@ -286,10 +286,6 @@ const UI = (() => {
             btn.disabled = true;
             btn.onclick = () => {
                 if (!questionCountdownStarted) return;
-                if (questionEndTimeMs) {
-                    const leftSec = (questionEndTimeMs - Date.now()) / 1000;
-                    if (leftSec <= 2) return;
-                }
                 Network.answerQuestion(currentRoomCode, idx);
                 qAnswers.querySelectorAll('.answer-btn').forEach(b => b.classList.add('locked'));
                 btn.classList.add('selected');
@@ -369,13 +365,6 @@ const UI = (() => {
             if (leftMs > 0) {
                 timerText.textContent = `${leftSec.toFixed(1)}s`;
                 if (leftSec < 3) timerText.style.color = '#e94560';
-
-                if (leftSec <= 2) {
-                    qAnswers.querySelectorAll('.answer-btn').forEach(b => {
-                        b.classList.add('locked');
-                        b.disabled = true;
-                    });
-                }
             } else {
                 clearInterval(questionTimerInterval);
                 timerText.textContent = 'Hết giờ!';
