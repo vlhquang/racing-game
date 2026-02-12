@@ -130,6 +130,12 @@ const UI = (() => {
             if (!currentRoomCode) return;
             Network.setVehicle(currentRoomCode, type || 'car');
         }
+        async function ensureRendererReady() {
+            if (typeof PhaserGame === 'undefined' || !PhaserGame.waitUntilReady) {
+                throw new Error('Module game chưa sẵn sàng');
+            }
+            await PhaserGame.waitUntilReady(12000);
+        }
         let configSnapshot = null;
 
         function setLoading(btn, isLoading, loadingText = 'Đang xử lý...') {
@@ -146,26 +152,38 @@ const UI = (() => {
         }
 
         // Create room
-        btnCreate.addEventListener('click', () => {
+        btnCreate.addEventListener('click', async () => {
             const name = playerNameInput.value.trim();
             if (!name) {
                 showError('Vui lòng nhập tên!');
                 return;
             }
             setLoading(btnCreate, true);
-            const vehicleType = getSelectedVehicleType();
-            Network.createRoom(name, vehicleType);
+            try {
+                await ensureRendererReady();
+                const vehicleType = getSelectedVehicleType();
+                Network.createRoom(name, vehicleType);
+            } catch (err) {
+                showError('Không tải được màn hình game. Vui lòng thử lại hoặc tải lại trang.');
+                setLoading(btnCreate, false);
+            }
         });
 
         // Join room
-        btnJoin.addEventListener('click', () => {
+        btnJoin.addEventListener('click', async () => {
             const name = playerNameInput.value.trim();
             const code = roomCodeInput.value.trim().toUpperCase();
             if (!name) { showError('Vui lòng nhập tên!'); return; }
             if (!code || code.length < 4) { showError('Mã phòng không hợp lệ!'); return; }
             setLoading(btnJoin, true);
-            const vehicleType = getSelectedVehicleType();
-            Network.joinRoom(code, name, vehicleType);
+            try {
+                await ensureRendererReady();
+                const vehicleType = getSelectedVehicleType();
+                Network.joinRoom(code, name, vehicleType);
+            } catch (err) {
+                showError('Không tải được màn hình game. Vui lòng thử lại hoặc tải lại trang.');
+                setLoading(btnJoin, false);
+            }
         });
 
         // Enter key to join

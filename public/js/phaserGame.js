@@ -8,6 +8,9 @@ const PhaserGame = (() => {
     let rendererType = null;
     let webglFallbackInstalled = false;
     let fallbackInProgress = false;
+    let rendererReady = false;
+    let lastInitError = null;
+    const readyWaiters = [];
 
     // Shared state from network
     let gameState = null;
@@ -65,6 +68,12 @@ const PhaserGame = (() => {
             },
             create: function () {
                 scene = this;
+                rendererReady = true;
+                lastInitError = null;
+                while (readyWaiters.length > 0) {
+                    const waiter = readyWaiters.shift();
+                    waiter.resolve(true);
+                }
 
                 this.scale.on('resize', (size) => {
                     resize(size.width, size.height);
@@ -155,7 +164,11 @@ const PhaserGame = (() => {
             rendererType = Phaser.CANVAS;
             init(containerId);
         } catch (e) {
-            // ignore
+            lastInitError = e;
+            while (readyWaiters.length > 0) {
+                const waiter = readyWaiters.shift();
+                waiter.reject(e);
+            }
         } finally {
             fallbackInProgress = false;
         }
@@ -181,6 +194,35 @@ const PhaserGame = (() => {
         try { game.destroy(true); } catch (e) { }
         game = null;
         scene = null;
+        rendererReady = false;
+    }
+
+    function waitUntilReady(timeoutMs = 10000) {
+        if (rendererReady && scene && game) {
+            return Promise.resolve(true);
+        }
+        if (lastInitError) {
+            return Promise.reject(lastInitError);
+        }
+        return new Promise((resolve, reject) => {
+            const waiter = { resolve, reject };
+            readyWaiters.push(waiter);
+
+            const timeout = setTimeout(() => {
+                const idx = readyWaiters.indexOf(waiter);
+                if (idx >= 0) readyWaiters.splice(idx, 1);
+                reject(new Error('Khởi tạo màn hình game quá thời gian chờ'));
+            }, timeoutMs);
+
+            waiter.resolve = (value) => {
+                clearTimeout(timeout);
+                resolve(value);
+            };
+            waiter.reject = (err) => {
+                clearTimeout(timeout);
+                reject(err);
+            };
+        });
     }
 
     function start(playerId) {
@@ -1859,6 +1901,7 @@ const PhaserGame = (() => {
 
     return {
         init,
+        waitUntilReady,
         destroy,
         start,
         stop,
