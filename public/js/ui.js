@@ -2,6 +2,61 @@
 // UI MODULE — Lobby, Question Modal, Results
 // ============================================
 const UI = (() => {
+    const CONFIG_FIELDS = [
+        { path: 'maxPlayers', label: 'Số người chơi tối đa', description: 'Số người chơi tối đa trong 1 phòng.', type: 'number', min: 1, step: 1 },
+        { path: 'raceDuration', label: 'Thời lượng ván đua (giây)', description: 'Thời gian tối đa của một trận đua.', type: 'number', min: 10, step: 1 },
+        { path: 'baseSpeed', label: 'Tốc độ cơ bản (px/giây)', description: 'Tốc độ mặc định của xe khi không có thưởng/phạt.', type: 'number', min: 10, step: 1 },
+        { path: 'laneWidth', label: 'Độ rộng làn đường (px)', description: 'Độ rộng một làn dùng cho tính toán vị trí xe.', type: 'number', min: 20, step: 1 },
+        { path: 'stoneStopTime', label: 'Dừng khi đụng đá (giây)', description: 'Thời gian xe bị dừng khi va vào đá.', type: 'number', min: 0, step: 0.1 },
+        { path: 'oilSpinTime', label: 'Xoay khi đụng dầu (giây)', description: 'Thời gian xe bị xoay khi va vào vệt dầu.', type: 'number', min: 0, step: 0.1 },
+        { path: 'initialObstacleDelay', label: 'Trễ sinh chướng ngại (giây)', description: 'Độ trễ từ lúc bắt đầu game tới khi xuất hiện chướng ngại vật.', type: 'number', min: 0, step: 0.1 },
+        { path: 'questionTime', label: 'Thời gian trả lời (giây)', description: 'Thời gian tối đa người chơi được chọn đáp án.', type: 'number', min: 1, step: 1 },
+        { path: 'questionImageMaxWait', label: 'Chờ tải ảnh câu hỏi (giây)', description: 'Thời gian chờ tối đa để client tải ảnh trước khi bắt đầu đếm ngược.', type: 'number', min: 0, step: 1 },
+        { path: 'questionSpawnOffset', label: 'Khoảng cách spawn câu hỏi (px)', description: 'Khoảng cộng thêm để hộp câu hỏi xuất hiện phía trước xe.', type: 'number', min: 0, step: 1 },
+        { path: 'questionLeadTime', label: 'Thời gian đệm spawn câu hỏi (giây)', description: 'Khoảng đệm để hộp câu hỏi xuất hiện đủ xa, tránh quá gần xe.', type: 'number', min: 0, step: 0.1 },
+        { path: 'correctRewardTime', label: 'Miễn nhiễm khi trả lời đúng (giây)', description: 'Thời gian được miễn nhiễm chướng ngại sau khi trả lời đúng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'rewardSpeedMultiplier', label: 'Hệ số tăng tốc khi thưởng', description: 'Hệ số nhân tốc độ khi người chơi được thưởng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'questionIntervalMin', label: 'Khoảng cách câu hỏi tối thiểu (giây)', description: 'Khoảng thời gian nhỏ nhất giữa hai lần xuất hiện câu hỏi.', type: 'number', min: 0, step: 1 },
+        { path: 'questionIntervalMax', label: 'Khoảng cách câu hỏi tối đa (giây)', description: 'Khoảng thời gian lớn nhất giữa hai lần xuất hiện câu hỏi.', type: 'number', min: 0, step: 1 },
+        { path: 'maxQuestions', label: 'Số câu hỏi tối đa mỗi ván', description: 'Giới hạn tổng số câu hỏi trong một trận.', type: 'number', min: 1, step: 1 },
+        { path: 'penalties.types.stop.duration', label: 'Phạt dừng - thời gian (giây)', description: 'Thời gian áp dụng phạt dừng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.stop.speedMultiplier', label: 'Phạt dừng - hệ số tốc độ', description: 'Hệ số tốc độ khi bị dừng. 0 nghĩa là đứng yên.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.reverse.duration', label: 'Phạt đảo điều khiển - thời gian (giây)', description: 'Thời gian áp dụng phạt đảo điều khiển.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.reverse.speedMultiplier', label: 'Phạt đảo điều khiển - hệ số tốc độ', description: 'Hệ số tốc độ trong lúc bị đảo điều khiển.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.spin.duration', label: 'Phạt quay vòng - thời gian (giây)', description: 'Thời gian áp dụng phạt quay vòng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.spin.speedMultiplier', label: 'Phạt quay vòng - hệ số tốc độ', description: 'Hệ số tốc độ trong lúc bị quay vòng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.blur.duration', label: 'Phạt mờ màn hình - thời gian (giây)', description: 'Thời gian áp dụng hiệu ứng làm mờ màn hình.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.blur.speedMultiplier', label: 'Phạt mờ màn hình - hệ số tốc độ', description: 'Hệ số tốc độ trong lúc bị mờ màn hình.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.blur.opacity', label: 'Phạt mờ màn hình - độ mờ', description: 'Độ mờ của overlay màn hình (0 đến 1).', type: 'number', min: 0, max: 1, step: 0.1 },
+        { path: 'penalties.types.rocket.duration', label: 'Phạt tên lửa - thời gian mặc định (giây)', description: 'Thời lượng mặc định của hiệu ứng bay kiểu tên lửa.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.rocket.speedMultiplier', label: 'Phạt tên lửa - hệ số tốc độ', description: 'Hệ số tốc độ trong lúc bị phạt tên lửa.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.rocket.wrongDuration', label: 'Phạt tên lửa khi trả lời sai (giây)', description: 'Thời lượng tên lửa khi người chơi chọn sai đáp án.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.rocket.noAnswerDuration', label: 'Phạt tên lửa khi không trả lời (giây)', description: 'Thời lượng tên lửa khi hết giờ mà không trả lời.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.bubble.duration', label: 'Phạt bong bóng - thời gian mặc định (giây)', description: 'Thời lượng mặc định của hiệu ứng bong bóng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.bubble.speedMultiplier', label: 'Phạt bong bóng - hệ số tốc độ', description: 'Hệ số tốc độ trong lúc bị phạt bong bóng.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.bubble.wrongDuration', label: 'Phạt bong bóng khi trả lời sai (giây)', description: 'Thời lượng bong bóng khi người chơi chọn sai đáp án.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.types.bubble.noAnswerDuration', label: 'Phạt bong bóng khi không trả lời (giây)', description: 'Thời lượng bong bóng khi hết giờ mà không trả lời.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.wrongAnswer.durationMultiplier', label: 'Nhân thời gian phạt khi trả lời sai', description: 'Hệ số nhân thời gian phạt cho trường hợp trả lời sai.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.wrongAnswer.availableTypes', label: 'Loại phạt cho trả lời sai', description: 'Danh sách loại phạt áp dụng cho trả lời sai. Cách nhau bằng dấu phẩy.', type: 'csv' },
+        { path: 'penalties.noAnswer.durationMultiplier', label: 'Nhân thời gian phạt khi không trả lời', description: 'Hệ số nhân thời gian phạt cho trường hợp hết giờ không trả lời.', type: 'number', min: 0, step: 0.1 },
+        { path: 'penalties.noAnswer.availableTypes', label: 'Loại phạt cho không trả lời', description: 'Danh sách loại phạt áp dụng cho không trả lời. Cách nhau bằng dấu phẩy.', type: 'csv' }
+    ];
+
+    function getByPath(obj, path) {
+        return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+    }
+
+    function setByPath(obj, path, value) {
+        const keys = path.split('.');
+        let ref = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+            const key = keys[i];
+            if (!ref[key] || typeof ref[key] !== 'object') ref[key] = {};
+            ref = ref[key];
+        }
+        ref[keys[keys.length - 1]] = value;
+    }
+
     let currentRoomCode = '';
     let isHost = false;
     let myPlayerId = '';
@@ -22,11 +77,18 @@ const UI = (() => {
         const btnJoin = document.getElementById('btn-join');
         const btnStart = document.getElementById('btn-start');
         const btnPlayAgain = document.getElementById('btn-play-again');
+        const btnConfig = document.getElementById('btn-config');
+        const configOverlay = document.getElementById('config-overlay');
+        const configForm = document.getElementById('config-form');
+        const btnConfigClose = document.getElementById('btn-config-close');
+        const btnConfigSave = document.getElementById('btn-config-save');
+        const configMsg = document.getElementById('config-msg');
         const playerNameInput = document.getElementById('player-name');
         const vehicleSelect = document.getElementById('vehicle-type');
         const resultsVehicleSelect = document.getElementById('results-vehicle-type');
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
+        let configSnapshot = null;
 
         function setLoading(btn, isLoading, loadingText = 'Đang xử lý...') {
             if (isLoading) {
@@ -79,6 +141,121 @@ const UI = (() => {
         btnStart.addEventListener('click', () => {
             setLoading(btnStart, true);
             Network.startGame(currentRoomCode);
+        });
+
+        function showConfigMsg(msg, isError = true) {
+            configMsg.textContent = msg;
+            configMsg.style.color = isError ? 'var(--accent-primary)' : 'var(--accent-green)';
+            configMsg.classList.remove('hidden');
+        }
+
+        function renderConfigForm(cfg) {
+            if (!configForm) return;
+            const fieldsHtml = CONFIG_FIELDS.map((field) => {
+                const inputId = `cfg-${field.path.replace(/\./g, '-')}`;
+                const value = getByPath(cfg, field.path);
+                const valueText = Array.isArray(value) ? value.join(', ') : (value ?? '');
+                const type = field.type === 'number' ? 'number' : 'text';
+                const stepAttr = field.step != null ? `step="${field.step}"` : '';
+                const minAttr = field.min != null ? `min="${field.min}"` : '';
+                const maxAttr = field.max != null ? `max="${field.max}"` : '';
+                return `
+                    <div class="config-field-row">
+                        <label class="config-field-label" for="${inputId}">${field.label}</label>
+                        <div class="config-field-path">${field.path}</div>
+                        <div class="config-field-desc">${field.description}</div>
+                        <input
+                            id="${inputId}"
+                            class="input-field"
+                            style="margin-bottom:0;"
+                            type="${type}"
+                            ${stepAttr}
+                            ${minAttr}
+                            ${maxAttr}
+                            data-config-path="${field.path}"
+                            data-config-type="${field.type}"
+                            value="${valueText}">
+                    </div>
+                `;
+            }).join('');
+            configForm.innerHTML = fieldsHtml;
+        }
+
+        function readConfigFromForm(baseConfig) {
+            const nextConfig = JSON.parse(JSON.stringify(baseConfig || {}));
+            const inputs = configForm.querySelectorAll('[data-config-path]');
+            inputs.forEach((input) => {
+                const path = input.dataset.configPath;
+                const type = input.dataset.configType;
+                const raw = (input.value || '').trim();
+                let parsed;
+                if (type === 'number') {
+                    parsed = Number(raw);
+                } else if (type === 'csv') {
+                    parsed = raw ? raw.split(',').map((v) => v.trim()).filter(Boolean) : [];
+                } else {
+                    parsed = raw;
+                }
+                setByPath(nextConfig, path, parsed);
+            });
+            return nextConfig;
+        }
+
+        async function openConfig() {
+            configMsg.classList.add('hidden');
+            configOverlay.classList.remove('hidden');
+            configForm.innerHTML = '<div class="config-form-loading">Đang tải cấu hình...</div>';
+            btnConfigSave.disabled = true;
+            try {
+                const cfg = await Network.getConfig();
+                configSnapshot = cfg;
+                renderConfigForm(cfg);
+                btnConfigSave.disabled = false;
+            } catch (err) {
+                configForm.innerHTML = '<div class="config-form-loading">Không tải được cấu hình.</div>';
+                showConfigMsg(err.message || 'Không tải được cấu hình');
+            }
+        }
+
+        function closeConfig() {
+            configOverlay.classList.add('hidden');
+            configMsg.classList.add('hidden');
+            configSnapshot = null;
+        }
+
+        btnConfig.addEventListener('click', () => {
+            openConfig();
+        });
+
+        btnConfigClose.addEventListener('click', () => {
+            closeConfig();
+        });
+
+        btnConfigSave.addEventListener('click', async () => {
+            configMsg.classList.add('hidden');
+            if (!configSnapshot) {
+                showConfigMsg('Chưa có dữ liệu cấu hình để lưu');
+                return;
+            }
+            const payload = readConfigFromForm(configSnapshot);
+            const invalidNumber = CONFIG_FIELDS
+                .filter((f) => f.type === 'number')
+                .find((f) => Number.isNaN(getByPath(payload, f.path)));
+            if (invalidNumber) {
+                showConfigMsg(`Giá trị số không hợp lệ: ${invalidNumber.label}`);
+                return;
+            }
+            btnConfigSave.disabled = true;
+            try {
+                const saved = await Network.saveConfig(payload);
+                configSnapshot = saved;
+                renderConfigForm(saved);
+                showConfigMsg('Đã lưu cấu hình runtime', false);
+            } catch (err) {
+                showConfigMsg(err.message || 'Lưu cấu hình thất bại');
+            } finally {
+                btnConfigSave.disabled = false;
+            }
         });
 
         // Copy Link

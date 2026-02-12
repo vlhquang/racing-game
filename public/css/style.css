@@ -503,6 +503,52 @@ body {
   font-size: 0.9rem;
 }
 
+.config-form {
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  max-height: 380px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.config-form-loading {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+.config-field-row {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.config-field-label {
+  display: block;
+  font-size: 0.96rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.config-field-path {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.config-field-desc {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  margin-bottom: 8px;
+}
+
 /* ============ MOBILE CONTROLS ============ */
 .mobile-controls {
   position: fixed;

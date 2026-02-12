@@ -3,11 +3,27 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const GameRoom = require('./GameRoom');
+const { getConfig, updateConfig } = require('./configCache');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: '*' }
+});
+app.use(express.json({ limit: '1mb' }));
+
+app.get('/api/config', (req, res) => {
+    res.json({ config: getConfig() });
+});
+
+app.post('/api/config', (req, res) => {
+    try {
+        const patch = req.body && req.body.config;
+        const next = updateConfig(patch || {});
+        res.json({ ok: true, config: next });
+    } catch (err) {
+        res.status(400).json({ ok: false, error: err.message || 'Invalid config payload' });
+    }
 });
 
 // Serve static files

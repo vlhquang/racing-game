@@ -1,5 +1,5 @@
 const QuestionManager = require('./QuestionManager');
-const CONFIG = require('./Config');
+const { getConfig } = require('./configCache');
 
 class GameRoom {
     constructor(roomCode, io) {
@@ -21,7 +21,7 @@ class GameRoom {
         this.questionCountdownStarted = false;
 
         // Load config
-        this.config = { ...CONFIG };
+        this.config = getConfig();
         this.nextObstacleDistance = 500;
 
         // Track questions
@@ -115,6 +115,8 @@ class GameRoom {
 
         // Ensure no timers from previous run.
         this.stop();
+        // Refresh runtime config for each round.
+        this.config = getConfig();
 
         console.log(`[GameRoom] Room ${this.roomCode}: Countdown initiated`);
         this.state = 'COUNTDOWN';

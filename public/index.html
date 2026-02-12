@@ -36,6 +36,7 @@
           <option value="bike">Xe máy</option>
         </select>
         <button id="btn-create" class="btn btn-primary">🏁 Tạo Phòng</button>
+        <button id="btn-config" class="btn btn-outline">⚙️ Cấu hình</button>
         <div class="divider"><span>hoặc</span></div>
         <input type="text" id="room-code-input" placeholder="Nhập mã phòng..." maxlength="4" class="input-field"
           style="text-transform:uppercase">
@@ -114,6 +115,24 @@
       </select>
       <div id="rankings-list" class="rankings-list"></div>
       <button id="btn-play-again" class="btn btn-primary">🔄 Chơi Lại</button>
+    </div>
+  </div>
+
+  <!-- CONFIG OVERLAY -->
+  <div id="config-overlay" class="overlay hidden">
+    <div class="result-box" style="max-width: 760px; width: 94%;">
+      <h2 style="font-family: 'Outfit', sans-serif; margin-bottom: 0.75rem;">Cấu Hình Runtime</h2>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.9rem;">
+        Mỗi trường có mô tả ngay bên dưới. Lưu sẽ cập nhật cache runtime trên server.
+      </p>
+      <div id="config-form" class="config-form">
+        <div class="config-form-loading">Đang tải cấu hình...</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="btn-config-close" class="btn btn-secondary">Đóng</button>
+        <button id="btn-config-save" class="btn btn-primary">Lưu Cấu Hình</button>
+      </div>
+      <div id="config-msg" class="error-msg hidden" style="margin-top: 0.5rem;"></div>
     </div>
   </div>
 

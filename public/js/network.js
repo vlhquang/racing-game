@@ -116,5 +116,29 @@ const Network = (() => {
         return socket ? socket.id : null;
     }
 
-    return { connect, on, createRoom, joinRoom, startGame, restartGame, sendInput, answerQuestion, questionReady, sendObstacleHit, getSocketId };
+    async function getConfig() {
+        const res = await fetch('/api/config');
+        if (!res.ok) throw new Error('Không tải được cấu hình');
+        const data = await res.json();
+        return data.config;
+    }
+
+    async function saveConfig(config) {
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+            throw new Error((data && data.error) || 'Không lưu được cấu hình');
+        }
+        return data.config;
+    }
+
+    return {
+        connect, on, createRoom, joinRoom, startGame, restartGame,
+        sendInput, answerQuestion, questionReady, sendObstacleHit,
+        getSocketId, getConfig, saveConfig
+    };
 })();
