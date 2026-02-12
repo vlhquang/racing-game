@@ -27,7 +27,6 @@ class GameRoom {
         this.questionPlan = [];
         this.questionManager = new QuestionManager();
         this.lastBroadcastTime = 0;
-        this.inactiveDeterministicIds = new Set();
     }
 
     getQuestionTimeLimit(question) {
@@ -153,7 +152,6 @@ class GameRoom {
         this.questionManager.reset();
         this.timeRemaining = this.config.raceDuration;
         this.lastTick = Date.now();
-        this.inactiveDeterministicIds.clear();
 
         this.questionsUsed = 0;
         this.questionPlan = this.buildQuestionPlan();
@@ -326,9 +324,6 @@ class GameRoom {
         // 2. Handle Deterministic Obstacles (Stone/Oil) - Verify on Server
         const d = obstacleData.distance;
         const lane = obstacleData.lane;
-        const obsId = obstacleData.id || `obs_${Math.floor(d)}_${lane}`;
-
-        if (this.inactiveDeterministicIds.has(obsId)) return;
 
         // VERIFY: Did this obstacle actually exist?
         const laneCount = this.getLaneCount();
@@ -348,9 +343,6 @@ class GameRoom {
             console.log(`[GameRoom] REJECTED hit: No obstacle at ${d}, lane ${lane}`);
             return;
         }
-
-        // Valid hit
-        this.inactiveDeterministicIds.add(obsId);
 
         if (obstacleData.type === 'stone') {
             player.status = 'stopped';
@@ -615,7 +607,6 @@ class GameRoom {
 
         this.io.to(this.roomCode).emit('game-state', {
             players: playersData,
-            inactiveDeterministicIds: Array.from(this.inactiveDeterministicIds),
             inactiveQuestionIds: this.questionPlan.filter((q) => !q.active).map((q) => q.id),
             timeRemaining: Math.ceil(this.timeRemaining),
             state: this.state,

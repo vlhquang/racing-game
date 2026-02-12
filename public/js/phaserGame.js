@@ -1465,8 +1465,6 @@ const PhaserGame = (() => {
                 const lanes = deterministicObstacleLanes(d, laneCount);
                 for (const lane of lanes) {
                     const obsId = `obs_${Math.floor(d)}_${lane}`;
-                    const isHit = gameState.inactiveDeterministicIds && gameState.inactiveDeterministicIds.includes(obsId);
-                    if (isHit) continue;
 
                     const rel = d - mySmoothDist;
                     const y = height * 0.75 - rel;
@@ -1541,11 +1539,8 @@ const PhaserGame = (() => {
                 if (!lanes.includes(myLane)) continue;
                 if (Math.abs(mySmoothDist - d) < 40) {
                     const obsId = `obs_${Math.floor(d)}_${myLane}`;
-                    const isDeactivated = gameState.inactiveDeterministicIds && gameState.inactiveDeterministicIds.includes(obsId);
-                    if (!isDeactivated) {
-                        const type = deterministicObstacleType(d, myLane);
-                        onHitCallback({ type, lane: myLane, distance: d, id: obsId });
-                    }
+                    const type = deterministicObstacleType(d, myLane);
+                    onHitCallback({ type, lane: myLane, distance: d, id: obsId });
                 }
             }
 

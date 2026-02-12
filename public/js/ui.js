@@ -108,6 +108,9 @@ const UI = (() => {
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
         const btnResultsCopyLink = document.getElementById('btn-results-copy-link');
+        const btnCopyLink = document.getElementById('btn-copy-link');
+        const lobbyQr = document.getElementById('room-qr-container');
+        const resultsQr = document.getElementById('results-room-qr-container');
 
         function getSelectedVehicleType() {
             return (lobbyVehicleSelectEl && lobbyVehicleSelectEl.value) || 'car';
@@ -129,6 +132,15 @@ const UI = (() => {
         function sendVehicleSelection(type) {
             if (!currentRoomCode) return;
             Network.setVehicle(currentRoomCode, type || 'car');
+        }
+
+        function applyHostUiVisibility() {
+            const isVisible = !!isHost;
+            if (btnConfig) btnConfig.classList.toggle('hidden', !isVisible);
+            if (btnCopyLink) btnCopyLink.classList.toggle('hidden', !isVisible);
+            if (btnResultsCopyLink) btnResultsCopyLink.classList.toggle('hidden', !isVisible);
+            if (lobbyQr) lobbyQr.classList.toggle('hidden', !isVisible);
+            if (resultsQr) resultsQr.classList.toggle('hidden', !isVisible);
         }
         async function ensureRendererReady() {
             if (typeof PhaserGame === 'undefined' || !PhaserGame.waitUntilReady) {
@@ -319,7 +331,6 @@ const UI = (() => {
         });
 
         // Copy Link
-        const btnCopyLink = document.getElementById('btn-copy-link');
         btnCopyLink.addEventListener('click', () => {
             const url = new URL(window.location.href);
             url.searchParams.set('room', currentRoomCode);
@@ -386,6 +397,7 @@ const UI = (() => {
             currentRoomCode = data.roomCode;
             myPlayerId = data.playerId;
             isHost = true;
+            applyHostUiVisibility();
             lobbyMenu.classList.add('hidden');
             lobbyRoom.classList.remove('hidden');
             document.getElementById('room-code-label').textContent = data.roomCode;
@@ -404,6 +416,7 @@ const UI = (() => {
             currentRoomCode = data.roomCode;
             myPlayerId = data.playerId;
             isHost = false;
+            applyHostUiVisibility();
             lobbyMenu.classList.add('hidden');
             lobbyRoom.classList.remove('hidden');
             document.getElementById('room-code-label').textContent = data.roomCode;
@@ -484,6 +497,11 @@ const UI = (() => {
     function updateQR(code, containerId = 'room-qr-container') {
         const qrContainer = document.getElementById(containerId);
         if (!qrContainer) return;
+        if (!isHost) {
+            qrContainer.innerHTML = '';
+            qrContainer.classList.add('hidden');
+            return;
+        }
         qrContainer.classList.remove('hidden');
         const url = new URL(window.location.href);
         url.searchParams.set('room', code);
