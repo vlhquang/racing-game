@@ -48,6 +48,10 @@ const Network = (() => {
             emitLocal('onGameState', data);
         });
 
+        socket.on('race-plan', (data) => {
+            emitLocal('onRacePlan', data);
+        });
+
         socket.on('obstacle-hit', (data) => {
             emitLocal('onObstacleHit', data);
         });

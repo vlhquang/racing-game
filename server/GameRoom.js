@@ -8,7 +8,6 @@ class GameRoom {
         this.state = 'WAITING';
         this.players = new Map();
         this.hostId = null;
-        this.obstacles = [];
         this.gameLoopInterval = null;
         this.lastTick = 0;
         this.timeRemaining = 0;
@@ -22,11 +21,10 @@ class GameRoom {
 
         // Load config
         this.config = getConfig();
-        this.nextObstacleDistance = 500;
 
         // Track questions
         this.questionsUsed = 0;
-        this.questionCooldownTimer = 0;
+        this.questionPlan = [];
         this.questionManager = new QuestionManager();
         this.lastBroadcastTime = 0;
         this.inactiveDeterministicIds = new Set();
@@ -155,16 +153,21 @@ class GameRoom {
         this.questionManager.reset();
         this.timeRemaining = this.config.raceDuration;
         this.lastTick = Date.now();
-        this.obstacles = [];
         this.inactiveDeterministicIds.clear();
 
-        const initialDelayDist = this.config.baseSpeed * (this.config.initialObstacleDelay || 3);
-        this.nextObstacleDistance = initialDelayDist + 600;
-
         this.questionsUsed = 0;
-
-        this.questionCooldownTimer = this.config.questionIntervalMin +
-            Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
+        this.questionPlan = this.buildQuestionPlan();
+        this.io.to(this.roomCode).emit('race-plan', {
+            seed: this.seed,
+            laneCount: this.getLaneCount(),
+            config: this.config,
+            questionPlan: this.questionPlan.map((q) => ({
+                id: q.id,
+                lane: q.lane,
+                distance: q.distance
+            })),
+            serverTime: Date.now()
+        });
 
         this.gameLoopInterval = setInterval(() => this.tick(), 16);
     }
@@ -180,24 +183,6 @@ class GameRoom {
                 this.timeRemaining = 0;
                 this.finishGame();
                 return;
-            }
-
-            let maxDistance = 0;
-            for (const p of this.players.values()) {
-                if (p.distance > maxDistance) maxDistance = p.distance;
-            }
-
-            const hasPenalty = [...this.players.values()].some(p => p.status === 'penalized');
-            if (!hasPenalty && this.questionCooldownTimer > 0) {
-                this.questionCooldownTimer -= dt;
-            }
-
-            // Spawn question when cooldown reaches ready (no distance gate)
-            if (!hasPenalty && this.questionCooldownTimer <= 0) {
-                const leadSec = (this.config.questionLeadTime || 2.5);
-                const leadDist = (this.config.baseSpeed || 300) * leadSec;
-                const spawnAt = Math.max(maxDistance + leadDist, maxDistance + 200);
-                this.spawnQuestionsOnly(spawnAt);
             }
 
             for (const p of this.players.values()) {
@@ -226,12 +211,10 @@ class GameRoom {
                 p.distance += moveSpeed * dt;
             }
 
-            const minDist = Math.min(...[...this.players.values()].map(p => p.distance)) - 500;
-            this.obstacles = this.obstacles.filter(o => o.distance > minDist);
         }
 
-        // Broadcast more frequently (30ms = ~33Hz) for smoother road
-        if (now - this.lastBroadcastTime >= 30) {
+        // Lower frequency network snapshots for smoother online play on weak devices/networks.
+        if (now - this.lastBroadcastTime >= 100) {
             this.broadcastState();
             this.lastBroadcastTime = now;
         }
@@ -259,64 +242,70 @@ class GameRoom {
         return lanes.slice(0, numObstacles);
     }
 
-    spawnQuestionsOnly(atDistance) {
-        const laneCount = this.getLaneCount();
-        const canSpawnQuestion = this.questionCooldownTimer <= 0 &&
-            this.questionsUsed < this.config.maxQuestions &&
-            !this.obstacles.some(o => o.type === 'question' && o.active);
-
-        if (canSpawnQuestion) {
-            const spawnOffset = (this.config.questionSpawnOffset !== undefined)
-                ? this.config.questionSpawnOffset
-                : 150;
-            const row = Math.floor(atDistance / 300) * 300;
-            const spawnDistance = Math.max(atDistance, row + spawnOffset);
-
-            const laneBlocked = new Set();
-            try {
-                // Avoid lanes occupied by deterministic obstacles in adjacent rows
-                    const prevRow = row;
-                    const nextRow = row + 300;
-                    for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
-                    for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
-                } catch (e) {
-                    // If seed not ready for any reason, fall back to random lane
-                }
-
-            const allLanes = Array.from({ length: laneCount }, (_, i) => i);
-            let candidates = allLanes.filter(l => !laneBlocked.has(l));
-            if (candidates.length === 0) {
-                // Relax: only avoid current row
-                const prevRowBlocked = new Set(this.getDeterministicObstacleLanes(row, laneCount));
-                candidates = allLanes.filter(l => !prevRowBlocked.has(l));
-            }
-            if (candidates.length === 0) candidates = allLanes;
-
-            // Final safety: avoid any obstacle in nearby rows (prev/current/next)
-            const nearRows = [row - 300, row, row + 300];
-            const safeLanes = candidates.filter(l => {
-                for (const r of nearRows) {
-                    if (r < 0) continue;
-                    const lanes = this.getDeterministicObstacleLanes(r, laneCount);
-                    if (lanes.includes(l)) return false;
-                }
-                return true;
-            });
-            const finalList = (safeLanes.length > 0) ? safeLanes : candidates;
-            const lane = finalList[Math.floor(Math.random() * finalList.length)];
-                this.obstacles.push({
-                    id: 'q_' + Math.random().toString(36).substr(2, 5),
-                    type: 'question',
-                    lane,
-                    distance: spawnDistance,
-                    active: true
-                });
-
-            this.questionCooldownTimer = this.config.questionIntervalMin +
-                Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
-
-            console.log(`[GameRoom] Room ${this.roomCode}: Question box spawned.`);
+    pickQuestionLaneAtDistance(distance, laneCount) {
+        const row = Math.floor(distance / 300) * 300;
+        const laneBlocked = new Set();
+        try {
+            const prevRow = row;
+            const nextRow = row + 300;
+            for (const l of this.getDeterministicObstacleLanes(prevRow, laneCount)) laneBlocked.add(l);
+            for (const l of this.getDeterministicObstacleLanes(nextRow, laneCount)) laneBlocked.add(l);
+        } catch (e) {
+            // ignore and fallback below
         }
+
+        const allLanes = Array.from({ length: laneCount }, (_, i) => i);
+        let candidates = allLanes.filter(l => !laneBlocked.has(l));
+        if (candidates.length === 0) {
+            const curBlocked = new Set(this.getDeterministicObstacleLanes(row, laneCount));
+            candidates = allLanes.filter(l => !curBlocked.has(l));
+        }
+        if (candidates.length === 0) candidates = allLanes;
+
+        const nearRows = [row - 300, row, row + 300];
+        const safeLanes = candidates.filter(l => {
+            for (const r of nearRows) {
+                if (r < 0) continue;
+                const lanes = this.getDeterministicObstacleLanes(r, laneCount);
+                if (lanes.includes(l)) return false;
+            }
+            return true;
+        });
+        const finalList = safeLanes.length > 0 ? safeLanes : candidates;
+        return finalList[Math.floor(Math.random() * finalList.length)];
+    }
+
+    buildQuestionPlan() {
+        const laneCount = this.getLaneCount();
+        const plan = [];
+        const maxQuestions = Math.max(0, Number(this.config.maxQuestions) || 0);
+        const minInterval = Number(this.config.questionIntervalMin) || 8;
+        const maxInterval = Number(this.config.questionIntervalMax) || minInterval;
+        const baseSpeed = Number(this.config.baseSpeed) || 300;
+        const raceDistanceCap = baseSpeed * (Number(this.config.raceDuration) || 120) * 1.2;
+        const leadTime = Number(this.config.questionLeadTime) || 2.5;
+        const spawnOffset = Number.isFinite(this.config.questionSpawnOffset)
+            ? this.config.questionSpawnOffset
+            : 100;
+        const initialDelay = Number(this.config.initialObstacleDelay) || 3;
+        let distanceCursor = Math.max(600, baseSpeed * (initialDelay + leadTime) + spawnOffset);
+
+        for (let i = 0; i < maxQuestions; i++) {
+            const intervalSec = minInterval + Math.random() * Math.max(0, (maxInterval - minInterval));
+            distanceCursor += intervalSec * baseSpeed;
+            if (distanceCursor > raceDistanceCap) break;
+            const row = Math.floor(distanceCursor / 300) * 300;
+            const spawnDistance = Math.max(distanceCursor, row + spawnOffset);
+            const lane = this.pickQuestionLaneAtDistance(spawnDistance, laneCount);
+            plan.push({
+                id: `q_${i}_${Math.random().toString(36).slice(2, 6)}`,
+                lane,
+                distance: Math.floor(spawnDistance),
+                active: true
+            });
+        }
+
+        return plan;
     }
 
     onObstacleHit(playerId, obstacleData) {
@@ -326,12 +315,10 @@ class GameRoom {
 
         // 1. Handle Questions (Server Authoritative)
         if (obstacleData.type === 'question') {
-            const obs = this.obstacles.find(o => o.id === obstacleData.id && o.active);
-            if (obs) {
-                obs.active = false;
-                if (player.status !== 'penalized') {
-                    this.triggerQuestion(player.id);
-                }
+            const planItem = this.questionPlan.find(q => q.id === obstacleData.id && q.active);
+            if (planItem && player.status !== 'penalized') {
+                planItem.active = false;
+                this.triggerQuestion(player.id);
             }
             return;
         }
@@ -387,9 +374,6 @@ class GameRoom {
     triggerQuestion(triggeredBy) {
         if (this.state !== 'RACING') return;
         this.questionsUsed++;
-
-        this.questionCooldownTimer = this.config.questionIntervalMin +
-            Math.random() * (this.config.questionIntervalMax - this.config.questionIntervalMin);
 
         const question = this.questionManager.getRandomQuestion();
         if (!question) return;
@@ -631,16 +615,28 @@ class GameRoom {
 
         this.io.to(this.roomCode).emit('game-state', {
             players: playersData,
-            obstacles: this.obstacles.filter(o => o.active), // Only questions here
             inactiveDeterministicIds: Array.from(this.inactiveDeterministicIds),
+            inactiveQuestionIds: this.questionPlan.filter((q) => !q.active).map((q) => q.id),
             timeRemaining: Math.ceil(this.timeRemaining),
             state: this.state,
-            nextQuestionIn: Math.max(0, this.questionCooldownTimer),
+            nextQuestionIn: this.getNextQuestionInSec(),
             questionsUsed: this.questionsUsed,
             maxQuestions: this.config.maxQuestions,
             serverTime: Date.now(),
             seed: this.seed
         });
+    }
+
+    getNextQuestionInSec() {
+        if (this.state !== 'RACING') return 0;
+        let maxDistance = 0;
+        for (const p of this.players.values()) {
+            if (p.distance > maxDistance) maxDistance = p.distance;
+        }
+        const next = this.questionPlan.find((q) => q.active && q.distance > maxDistance);
+        if (!next) return 0;
+        const speed = Math.max(1, Number(this.config.baseSpeed) || 300);
+        return Math.max(0, (next.distance - maxDistance) / speed);
     }
 
     finishGame() {

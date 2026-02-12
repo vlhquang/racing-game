@@ -17,6 +17,7 @@ const PhaserGame = (() => {
     let myId = '';
     let config = null;
     let seed = null;
+    let racePlan = null;
 
     // Prediction
     let predictedLane = null;
@@ -232,6 +233,7 @@ const PhaserGame = (() => {
     function stop() {
         // Phaser loop keeps running; we just stop updating via clearing state.
         gameState = null;
+        racePlan = null;
 
         if (cars && cars.hideAll) cars.hideAll();
         if (obstacles && obstacles.hideAll) obstacles.hideAll();
@@ -269,6 +271,13 @@ const PhaserGame = (() => {
                 }
             }
         }
+    }
+
+    function setRacePlan(plan) {
+        if (!plan) return;
+        racePlan = plan;
+        if (plan.seed) seed = plan.seed;
+        if (plan.config) config = plan.config;
     }
 
     function predictMove(direction, laneCount) {
@@ -1484,10 +1493,13 @@ const PhaserGame = (() => {
                 }
             }
 
-            // Server question obstacles
-            if (gameState.obstacles) {
-                for (const obs of gameState.obstacles) {
-                    if (obs.type !== 'question' || !obs.active) continue;
+            // Pre-planned question boxes from server race plan
+            if (racePlan && Array.isArray(racePlan.questionPlan)) {
+                const inactiveQuestionIds = new Set(
+                    (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
+                );
+                for (const obs of racePlan.questionPlan) {
+                    if (inactiveQuestionIds.has(obs.id)) continue;
                     const rel = obs.distance - mySmoothDist;
                     const y = height * 0.75 - rel;
                     if (y < -120 || y > height + 120) continue;
@@ -1537,12 +1549,15 @@ const PhaserGame = (() => {
                 }
             }
 
-            if (gameState.obstacles) {
-                for (const obs of gameState.obstacles) {
-                    if (obs.type === 'question' && obs.active && obs.lane === myLane) {
-                        if (Math.abs(mySmoothDist - obs.distance) < 40) {
-                            onHitCallback(obs);
-                        }
+            if (racePlan && Array.isArray(racePlan.questionPlan)) {
+                const inactiveQuestionIds = new Set(
+                    (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
+                );
+                for (const obs of racePlan.questionPlan) {
+                    if (inactiveQuestionIds.has(obs.id)) continue;
+                    if (obs.lane !== myLane) continue;
+                    if (Math.abs(mySmoothDist - obs.distance) < 40) {
+                        onHitCallback({ type: 'question', id: obs.id, lane: obs.lane, distance: obs.distance });
                     }
                 }
             }
@@ -1905,6 +1920,7 @@ const PhaserGame = (() => {
         destroy,
         start,
         stop,
+        setRacePlan,
         setGameState,
         predictMove,
         getGameState,

@@ -100,6 +100,10 @@
         UI.ensureControlsVisible();
     });
 
+    Network.on('onRacePlan', (data) => {
+        PhaserGame.setRacePlan(data);
+    });
+
     // Network event: obstacle hit (for effects)
     Network.on('onObstacleHit', (data) => {
         if (data.playerId === UI.getPlayerId()) {
