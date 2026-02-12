@@ -65,6 +65,24 @@ const UI = (() => {
     let questionCountdownStarted = false;
     let questionEndTimeMs = 0;
     let questionTimeLimitSec = 0;
+    let lobbyVehicleSelectEl = null;
+    let roomVehicleSelectEl = null;
+    let resultsVehicleSelectEl = null;
+    let latestPlayers = [];
+
+    const VEHICLE_LABELS = {
+        car: 'CAR',
+        taxi: 'TAXI',
+        bus: 'BUS',
+        police: 'POLICE',
+        trafficpolice: 'TRAFFIC',
+        truck: 'TRUCK',
+        sport: 'SPORT',
+        icecream: 'ICECREAM',
+        tank: 'TANK',
+        f1: 'F1',
+        bike: 'BIKE'
+    };
 
     function init() {
         // DOM elements
@@ -84,10 +102,34 @@ const UI = (() => {
         const btnConfigSave = document.getElementById('btn-config-save');
         const configMsg = document.getElementById('config-msg');
         const playerNameInput = document.getElementById('player-name');
-        const vehicleSelect = document.getElementById('vehicle-type');
-        const resultsVehicleSelect = document.getElementById('results-vehicle-type');
+        lobbyVehicleSelectEl = document.getElementById('vehicle-type');
+        roomVehicleSelectEl = document.getElementById('room-vehicle-type');
+        resultsVehicleSelectEl = document.getElementById('results-vehicle-type');
         const roomCodeInput = document.getElementById('room-code-input');
         const errorMsg = document.getElementById('error-msg');
+        const btnResultsCopyLink = document.getElementById('btn-results-copy-link');
+
+        function getSelectedVehicleType() {
+            return (lobbyVehicleSelectEl && lobbyVehicleSelectEl.value) || 'car';
+        }
+
+        function syncVehicleSelects(type) {
+            const nextType = type || 'car';
+            [lobbyVehicleSelectEl, roomVehicleSelectEl, resultsVehicleSelectEl].forEach((el) => {
+                if (el) el.value = nextType;
+            });
+        }
+
+        function updateMyVehicleFromPlayers(players) {
+            if (!players || !myPlayerId) return;
+            const me = players.find((p) => p.id === myPlayerId);
+            if (me && me.vehicleType) syncVehicleSelects(me.vehicleType);
+        }
+
+        function sendVehicleSelection(type) {
+            if (!currentRoomCode) return;
+            Network.setVehicle(currentRoomCode, type || 'car');
+        }
         let configSnapshot = null;
 
         function setLoading(btn, isLoading, loadingText = 'Đang xử lý...') {
@@ -111,7 +153,7 @@ const UI = (() => {
                 return;
             }
             setLoading(btnCreate, true);
-            const vehicleType = vehicleSelect ? (vehicleSelect.value || 'car') : 'car';
+            const vehicleType = getSelectedVehicleType();
             Network.createRoom(name, vehicleType);
         });
 
@@ -122,7 +164,7 @@ const UI = (() => {
             if (!name) { showError('Vui lòng nhập tên!'); return; }
             if (!code || code.length < 4) { showError('Mã phòng không hợp lệ!'); return; }
             setLoading(btnJoin, true);
-            const vehicleType = vehicleSelect ? (vehicleSelect.value || 'car') : 'car';
+            const vehicleType = getSelectedVehicleType();
             Network.joinRoom(code, name, vehicleType);
         });
 
@@ -275,16 +317,40 @@ const UI = (() => {
             });
         });
 
+        if (btnResultsCopyLink) {
+            btnResultsCopyLink.addEventListener('click', () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('room', currentRoomCode);
+                navigator.clipboard.writeText(url.toString()).then(() => {
+                    const originalText = btnResultsCopyLink.textContent;
+                    btnResultsCopyLink.textContent = '✅ Đã sao chép!';
+                    btnResultsCopyLink.classList.replace('btn-secondary', 'btn-primary');
+                    setTimeout(() => {
+                        btnResultsCopyLink.textContent = originalText;
+                        btnResultsCopyLink.classList.replace('btn-primary', 'btn-secondary');
+                    }, 2000);
+                });
+            });
+        }
+
         // Play again (host restarts game in same room)
         btnPlayAgain.addEventListener('click', () => {
             if (!currentRoomCode) {
                 location.reload();
                 return;
             }
-            if (resultsVehicleSelect) {
-                vehicleSelect.value = resultsVehicleSelect.value || 'car';
-            }
-            Network.restartGame(currentRoomCode, vehicleSelect.value || 'car');
+            const selected = (resultsVehicleSelectEl && resultsVehicleSelectEl.value) || 'car';
+            syncVehicleSelects(selected);
+            Network.restartGame(currentRoomCode, selected);
+        });
+
+        [lobbyVehicleSelectEl, roomVehicleSelectEl, resultsVehicleSelectEl].forEach((el) => {
+            if (!el) return;
+            el.addEventListener('change', () => {
+                const selected = el.value || 'car';
+                syncVehicleSelects(selected);
+                sendVehicleSelection(selected);
+            });
         });
 
         function showError(msg) {
@@ -305,10 +371,14 @@ const UI = (() => {
             lobbyMenu.classList.add('hidden');
             lobbyRoom.classList.remove('hidden');
             document.getElementById('room-code-label').textContent = data.roomCode;
+            const resultsRoomCodeLabel = document.getElementById('results-room-code-label');
+            if (resultsRoomCodeLabel) resultsRoomCodeLabel.textContent = data.roomCode;
             document.getElementById('btn-start').classList.remove('hidden');
             document.getElementById('waiting-msg').classList.add('hidden');
             updatePlayerList(data.players);
+            updateMyVehicleFromPlayers(data.players);
             updateQR(data.roomCode);
+            updateQR(data.roomCode, 'results-room-qr-container');
         });
 
         Network.on('onRoomJoined', (data) => {
@@ -319,18 +389,29 @@ const UI = (() => {
             lobbyMenu.classList.add('hidden');
             lobbyRoom.classList.remove('hidden');
             document.getElementById('room-code-label').textContent = data.roomCode;
+            const resultsRoomCodeLabel = document.getElementById('results-room-code-label');
+            if (resultsRoomCodeLabel) resultsRoomCodeLabel.textContent = data.roomCode;
             document.getElementById('btn-start').classList.add('hidden');
             document.getElementById('waiting-msg').classList.remove('hidden');
             updatePlayerList(data.players);
+            updateMyVehicleFromPlayers(data.players);
             updateQR(data.roomCode);
+            updateQR(data.roomCode, 'results-room-qr-container');
         });
 
         Network.on('onPlayerJoined', (data) => {
             updatePlayerList(data.players);
+            updateMyVehicleFromPlayers(data.players);
         });
 
         Network.on('onPlayerLeft', (data) => {
             updatePlayerList(data.players);
+            updateMyVehicleFromPlayers(data.players);
+        });
+
+        Network.on('onPlayerUpdated', (data) => {
+            updatePlayerList(data.players);
+            updateMyVehicleFromPlayers(data.players);
         });
 
         Network.on('onError', (msg) => {
@@ -359,30 +440,17 @@ const UI = (() => {
     }
 
     function updatePlayerList(players) {
-        const list = document.getElementById('player-list');
+        latestPlayers = Array.isArray(players) ? players : [];
+        renderPlayerListById('player-list', latestPlayers);
+        renderPlayerListById('results-player-list', latestPlayers);
+    }
+
+    function renderPlayerListById(listId, players) {
+        const list = document.getElementById(listId);
+        if (!list) return;
         list.innerHTML = '';
-        players.forEach(p => {
-            const vehicleLabel = (p.vehicleType === 'taxi')
-                ? 'TAXI'
-                : (p.vehicleType === 'bus')
-                    ? 'BUS'
-                : (p.vehicleType === 'police')
-                    ? 'POLICE'
-                    : (p.vehicleType === 'trafficpolice')
-                        ? 'TRAFFIC'
-                    : (p.vehicleType === 'truck')
-                        ? 'TRUCK'
-                    : (p.vehicleType === 'sport')
-                        ? 'SPORT'
-                    : (p.vehicleType === 'icecream')
-                        ? 'ICECREAM'
-                    : (p.vehicleType === 'tank')
-                        ? 'TANK'
-                        : (p.vehicleType === 'f1')
-                            ? 'F1'
-                            : (p.vehicleType === 'bike')
-                                ? 'BIKE'
-                                : 'CAR';
+        players.forEach((p) => {
+            const vehicleLabel = VEHICLE_LABELS[p.vehicleType] || 'CAR';
             const item = document.createElement('div');
             item.className = 'player-item';
             item.innerHTML = `
@@ -395,17 +463,9 @@ const UI = (() => {
         });
     }
 
-    function updateQR(code) {
-        const qrContainer = document.getElementById('room-qr-container');
+    function updateQR(code, containerId = 'room-qr-container') {
+        const qrContainer = document.getElementById(containerId);
         if (!qrContainer) return;
-
-        // Requirement: Only show for Host
-        if (!isHost) {
-            qrContainer.innerHTML = '';
-            qrContainer.classList.add('hidden');
-            return;
-        }
-
         qrContainer.classList.remove('hidden');
         const url = new URL(window.location.href);
         url.searchParams.set('room', code);
@@ -662,9 +722,16 @@ const UI = (() => {
 
         const list = document.getElementById('rankings-list');
         list.innerHTML = '';
-        if (resultsVehicleSelect) {
-            resultsVehicleSelect.value = vehicleSelect.value || 'car';
+        if (resultsVehicleSelectEl) {
+            const selected = (roomVehicleSelectEl && roomVehicleSelectEl.value)
+                || (lobbyVehicleSelectEl && lobbyVehicleSelectEl.value)
+                || 'car';
+            resultsVehicleSelectEl.value = selected;
         }
+        const resultsRoomCodeLabel = document.getElementById('results-room-code-label');
+        if (resultsRoomCodeLabel) resultsRoomCodeLabel.textContent = currentRoomCode || '----';
+        updateQR(currentRoomCode, 'results-room-qr-container');
+        renderPlayerListById('results-player-list', latestPlayers);
 
         const medals = ['🥇', '🥈', '🥉', '4️⃣'];
 

@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
             socket.emit('error-msg', { message: 'Phòng không tồn tại!' });
             return;
         }
-        if (room.state !== 'WAITING') {
+        if (room.state !== 'WAITING' && room.state !== 'FINISHED') {
             socket.emit('error-msg', { message: 'Trận đấu đã bắt đầu!' });
             return;
         }
@@ -107,6 +107,16 @@ io.on('connection', (socket) => {
             players: room.getPlayersInfo()
         });
         console.log(`${playerName} joined room ${roomCode}`);
+    });
+
+    socket.on('set-vehicle', ({ roomCode, vehicleType }) => {
+        const room = rooms.get(roomCode);
+        if (!room) return;
+        if (room.state === 'RACING' || room.state === 'QUESTION' || room.state === 'COUNTDOWN') return;
+        room.setPlayerVehicle(socket.id, vehicleType);
+        io.to(roomCode).emit('player-updated', {
+            players: room.getPlayersInfo()
+        });
     });
 
     socket.on('start-game', ({ roomCode }) => {

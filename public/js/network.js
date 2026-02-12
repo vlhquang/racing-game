@@ -32,6 +32,10 @@ const Network = (() => {
             emitLocal('onPlayerLeft', data);
         });
 
+        socket.on('player-updated', (data) => {
+            emitLocal('onPlayerUpdated', data);
+        });
+
         socket.on('error-msg', (data) => {
             emitLocal('onError', data.message);
         });
@@ -96,6 +100,10 @@ const Network = (() => {
         socket.emit('restart-game', { roomCode, vehicleType });
     }
 
+    function setVehicle(roomCode, vehicleType) {
+        socket.emit('set-vehicle', { roomCode, vehicleType });
+    }
+
     function sendInput(roomCode, direction) {
         socket.emit('player-input', { roomCode, direction });
     }
@@ -138,7 +146,7 @@ const Network = (() => {
 
     return {
         connect, on, createRoom, joinRoom, startGame, restartGame,
-        sendInput, answerQuestion, questionReady, sendObstacleHit,
+        setVehicle, sendInput, answerQuestion, questionReady, sendObstacleHit,
         getSocketId, getConfig, saveConfig
     };
 })();
