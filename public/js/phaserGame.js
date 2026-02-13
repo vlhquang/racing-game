@@ -1122,7 +1122,7 @@ const PhaserGame = (() => {
                 }
 
                 // Status effects (visual only)
-                if (p.status === 'spinning') {
+                if (p.status === 'spinning' || (p.status === 'penalized' && p.effectType === 'spin')) {
                     car.container.setRotation((s.time.now / 1000) * 6);
                     car.container.setAlpha(0.85);
                 } else if (p.status === 'stopped') {
@@ -1422,6 +1422,7 @@ const PhaserGame = (() => {
             question: []
         };
         const activeById = new Map();
+        let lastCollisionDist = null;
 
         function acquire(type) {
             const arr = pool[type];
@@ -1527,17 +1528,27 @@ const PhaserGame = (() => {
 
         function checkCollisions(mySmoothDist, myLane, laneCount) {
             if (!seed || !config || !gameState || !onHitCallback) return;
+            if (!Number.isFinite(mySmoothDist)) return;
+            if (lastCollisionDist === null) {
+                lastCollisionDist = mySmoothDist;
+                return;
+            }
+            const fromDist = lastCollisionDist;
+            const toDist = mySmoothDist;
+            const minDist = Math.min(fromDist, toDist) - 12;
+            const maxDist = Math.max(fromDist, toDist) + 12;
+            lastCollisionDist = mySmoothDist;
 
             const initialDelayDist = (config.baseSpeed || 300) * (config.initialObstacleDelay || 3);
             const step = 300;
-            const checkStart = Math.floor(mySmoothDist / step) * step;
+            const checkStart = Math.floor(minDist / step) * step;
             const checkEnd = checkStart + 600;
 
             for (let d = checkStart; d < checkEnd; d += step) {
                 if (d < initialDelayDist + 600) continue;
                 const lanes = deterministicObstacleLanes(d, laneCount);
                 if (!lanes.includes(myLane)) continue;
-                if (Math.abs(mySmoothDist - d) < 40) {
+                if (d >= minDist && d <= maxDist) {
                     const obsId = `obs_${Math.floor(d)}_${myLane}`;
                     const type = deterministicObstacleType(d, myLane);
                     onHitCallback({ type, lane: myLane, distance: d, id: obsId });
@@ -1551,7 +1562,7 @@ const PhaserGame = (() => {
                 for (const obs of racePlan.questionPlan) {
                     if (inactiveQuestionIds.has(obs.id)) continue;
                     if (obs.lane !== myLane) continue;
-                    if (Math.abs(mySmoothDist - obs.distance) < 40) {
+                    if (obs.distance >= minDist && obs.distance <= maxDist) {
                         onHitCallback({ type: 'question', id: obs.id, lane: obs.lane, distance: obs.distance });
                     }
                 }
@@ -1559,6 +1570,7 @@ const PhaserGame = (() => {
         }
 
         function hideAll() {
+            lastCollisionDist = null;
             for (const entry of activeById.values()) {
                 entry.sprite.setVisible(false);
             }

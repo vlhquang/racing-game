@@ -99,6 +99,8 @@ const Input = (() => {
             // Touch-and-hold on left/right side to keep shifting lanes
             let activeDir = null;
             surface.addEventListener('touchstart', (e) => {
+                clearInterval(leftInterval);
+                clearInterval(rightInterval);
                 const touch = e.touches[0];
                 const rect = surface.getBoundingClientRect();
                 const x = touch.clientX - rect.left;
@@ -116,6 +118,8 @@ const Input = (() => {
                 activeDir = null;
                 clearInterval(leftInterval);
                 clearInterval(rightInterval);
+                leftInterval = null;
+                rightInterval = null;
             };
             surface.addEventListener('touchend', stopHold, { passive: true });
             surface.addEventListener('touchcancel', stopHold, { passive: true });

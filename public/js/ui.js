@@ -142,6 +142,7 @@ const UI = (() => {
             if (lobbyQr) lobbyQr.classList.toggle('hidden', !isVisible);
             if (resultsQr) resultsQr.classList.toggle('hidden', !isVisible);
         }
+        applyHostUiVisibility();
         async function ensureRendererReady() {
             if (typeof PhaserGame === 'undefined' || !PhaserGame.waitUntilReady) {
                 throw new Error('Module game chưa sẵn sàng');
@@ -417,6 +418,7 @@ const UI = (() => {
             myPlayerId = data.playerId;
             isHost = false;
             applyHostUiVisibility();
+            closeConfig();
             lobbyMenu.classList.add('hidden');
             lobbyRoom.classList.remove('hidden');
             document.getElementById('room-code-label').textContent = data.roomCode;
