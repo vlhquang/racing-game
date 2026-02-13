@@ -79,10 +79,12 @@
 
         // Instant feedback
         if (obstacle.type === 'stone') {
+            PhaserGame.applyLocalObstacleHit('stone');
             PhaserGame.triggerShake(8, 0.5);
             PhaserGame.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
             // We can even locally set status if we want extreme snappiness
         } else if (obstacle.type === 'oil') {
+            PhaserGame.applyLocalObstacleHit('oil');
             PhaserGame.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
         }
 

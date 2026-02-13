@@ -301,6 +301,36 @@ const PhaserGame = (() => {
         onHitCallback = callback;
     }
 
+    function applyLocalObstacleHit(type) {
+        if (!gameState || !gameState.players || !myId) return;
+        const me = gameState.players.find((p) => p.id === myId);
+        if (!me) return;
+
+        const base = (config && Number(config.baseSpeed)) || 300;
+        const stoneTime = (config && Number(config.stoneStopTime)) || 1.0;
+        const oilTime = (config && Number(config.oilSpinTime)) || 1.5;
+
+        if (type === 'stone') {
+            me.status = 'stopped';
+            me.effectType = null;
+            me.effectTimer = stoneTime;
+            me.speed = 0;
+        } else if (type === 'oil') {
+            me.status = 'spinning';
+            me.effectType = null;
+            me.effectTimer = oilTime;
+            me.speed = base * 0.1;
+        } else {
+            return;
+        }
+
+        const snap = serverSnapshots.get(myId);
+        if (snap) {
+            snap.speed = me.speed;
+            serverSnapshots.set(myId, snap);
+        }
+    }
+
     function updateSmoothDistances(dt) {
         if (!gameState || !gameState.players) return;
         const now = performance.now();
@@ -1932,6 +1962,7 @@ const PhaserGame = (() => {
         predictMove,
         getGameState,
         setOnHit,
+        applyLocalObstacleHit,
         triggerShake,
         addNotification
     };
