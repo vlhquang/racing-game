@@ -27,6 +27,7 @@ const PhaserGame = (() => {
     const displayDistances = new Map();
     const serverSnapshots = new Map();
     let localDistance = 0;
+    let localImmediateEffect = null;
 
     // Callback for collision hit
     let onHitCallback = null;
@@ -234,6 +235,7 @@ const PhaserGame = (() => {
         // Phaser loop keeps running; we just stop updating via clearing state.
         gameState = null;
         racePlan = null;
+        localImmediateEffect = null;
 
         if (cars && cars.hideAll) cars.hideAll();
         if (obstacles && obstacles.hideAll) obstacles.hideAll();
@@ -268,6 +270,14 @@ const PhaserGame = (() => {
                     predictedLane = null;
                 } else if (Date.now() - predictionTimestamp > 500) {
                     predictedLane = null;
+                }
+            }
+            if (serverPlayer && localImmediateEffect) {
+                const confirmedByServer =
+                    (localImmediateEffect.type === 'stone' && serverPlayer.status === 'stopped') ||
+                    (localImmediateEffect.type === 'oil' && serverPlayer.status === 'spinning');
+                if (confirmedByServer) {
+                    localImmediateEffect = null;
                 }
             }
         }
@@ -324,9 +334,20 @@ const PhaserGame = (() => {
             return;
         }
 
+        localImmediateEffect = {
+            type,
+            until: Date.now() + 600
+        };
+
         const snap = serverSnapshots.get(myId);
         if (snap) {
+            const myDisplayDist = displayDistances.get(myId);
+            if (Number.isFinite(myDisplayDist)) {
+                localDistance = myDisplayDist;
+                snap.dist = myDisplayDist;
+            }
             snap.speed = me.speed;
+            snap.time = performance.now();
             serverSnapshots.set(myId, snap);
         }
     }
@@ -345,7 +366,11 @@ const PhaserGame = (() => {
                 const isLocal = (p.id === myId);
 
                 if (isLocal) {
-                    localDistance += snap.speed * dt;
+                    const overrideActive = !!(localImmediateEffect && Date.now() < localImmediateEffect.until);
+                    const overrideSpeed = overrideActive
+                        ? ((localImmediateEffect.type === 'stone') ? 0 : (((config && Number(config.baseSpeed)) || 300) * 0.1))
+                        : snap.speed;
+                    localDistance += overrideSpeed * dt;
                     const diff = predictedServerDist - localDistance;
 
                     if (gameState.state !== 'RACING') {
@@ -353,7 +378,7 @@ const PhaserGame = (() => {
                     } else if (Math.abs(diff) > 300) {
                         localDistance = predictedServerDist;
                     } else {
-                        localDistance += diff * 0.05;
+                        localDistance += diff * (overrideActive ? 0.01 : 0.05);
                     }
                     current = localDistance;
                 } else {
@@ -1152,10 +1177,14 @@ const PhaserGame = (() => {
                 }
 
                 // Status effects (visual only)
-                if (p.status === 'spinning' || (p.status === 'penalized' && p.effectType === 'spin')) {
+                const localOverrideActive = (p.id === myId) && localImmediateEffect && (Date.now() < localImmediateEffect.until);
+                const displayStatus = localOverrideActive
+                    ? ((localImmediateEffect.type === 'oil') ? 'spinning' : 'stopped')
+                    : p.status;
+                if (displayStatus === 'spinning' || (p.status === 'penalized' && p.effectType === 'spin')) {
                     car.container.setRotation((s.time.now / 1000) * 6);
                     car.container.setAlpha(0.85);
-                } else if (p.status === 'stopped') {
+                } else if (displayStatus === 'stopped') {
                     car.container.x += Math.sin((s.time.now / 1000) * 30) * 2;
                 } else if (p.status === 'penalized' && p.effectType === 'blur') {
                     car.container.setAlpha(0.6);
