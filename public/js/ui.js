@@ -466,6 +466,17 @@ const UI = (() => {
             showCountdown(data.count);
         });
 
+        Network.on('onRaceLoading', (data) => {
+            showGameScreen();
+            const overlay = document.getElementById('countdown-overlay');
+            const text = document.getElementById('countdown-text');
+            overlay.classList.remove('hidden');
+            text.textContent = (data && data.message) ? data.message : 'Đang tải vòng đua...';
+            text.style.animation = 'none';
+            text.style.fontSize = '2rem';
+            text.style.color = '#f5c518';
+        });
+
         Network.on('onGameOver', (data) => {
             showResults(data.rankings);
         });
@@ -539,11 +550,14 @@ const UI = (() => {
         if (count > 0) {
             overlay.classList.remove('hidden');
             text.textContent = count;
+            text.style.fontSize = '';
+            text.style.color = '';
             text.style.animation = 'none';
             text.offsetHeight; // trigger reflow
             text.style.animation = 'countPop 0.5s ease-out';
         } else {
             text.textContent = 'GO!';
+            text.style.fontSize = '';
             text.style.color = '#27ae60';
             text.style.animation = 'none';
             text.offsetHeight;

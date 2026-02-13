@@ -44,6 +44,10 @@ const Network = (() => {
             emitLocal('onCountdown', data);
         });
 
+        socket.on('race-loading', (data) => {
+            emitLocal('onRaceLoading', data);
+        });
+
         socket.on('game-state', (data) => {
             emitLocal('onGameState', data);
         });

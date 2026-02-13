@@ -28,6 +28,7 @@ const PhaserGame = (() => {
     const serverSnapshots = new Map();
     let localDistance = 0;
     let localImmediateEffect = null;
+    const syncedObstacleEffects = new Map();
 
     // Callback for collision hit
     let onHitCallback = null;
@@ -236,6 +237,7 @@ const PhaserGame = (() => {
         gameState = null;
         racePlan = null;
         localImmediateEffect = null;
+        syncedObstacleEffects.clear();
 
         if (cars && cars.hideAll) cars.hideAll();
         if (obstacles && obstacles.hideAll) obstacles.hideAll();
@@ -285,7 +287,12 @@ const PhaserGame = (() => {
 
     function setRacePlan(plan) {
         if (!plan) return;
-        racePlan = plan;
+        racePlan = {
+            ...plan,
+            obstacles: Array.isArray(plan.obstacles)
+                ? [...plan.obstacles].sort((a, b) => (a.distance || 0) - (b.distance || 0))
+                : []
+        };
         if (plan.seed) seed = plan.seed;
         if (plan.config) config = plan.config;
     }
@@ -336,7 +343,7 @@ const PhaserGame = (() => {
 
         localImmediateEffect = {
             type,
-            until: Date.now() + 600
+            until: Date.now() + ((type === 'stone' ? stoneTime : oilTime) * 1000)
         };
 
         const snap = serverSnapshots.get(myId);
@@ -352,6 +359,19 @@ const PhaserGame = (() => {
         }
     }
 
+    function applySyncedObstacleEffect(playerId, type, durationSec) {
+        if (!playerId || (type !== 'stone' && type !== 'oil')) return;
+        const dur = Math.max(0.1, Number(durationSec) || 0.8);
+        syncedObstacleEffects.set(playerId, {
+            type,
+            until: Date.now() + (dur * 1000)
+        });
+    }
+
+    function clearPredictionLane() {
+        predictedLane = null;
+    }
+
     function updateSmoothDistances(dt) {
         if (!gameState || !gameState.players) return;
         const now = performance.now();
@@ -359,34 +379,47 @@ const PhaserGame = (() => {
         for (const p of gameState.players) {
             const snap = serverSnapshots.get(p.id);
             let current = displayDistances.get(p.id) ?? p.distance;
+            const syncedFx = syncedObstacleEffects.get(p.id);
+            const syncedActive = !!(syncedFx && Date.now() < syncedFx.until);
+            if (syncedFx && !syncedActive) {
+                syncedObstacleEffects.delete(p.id);
+            }
 
             if (snap) {
                 const timeSince = (now - snap.time) / 1000;
                 const predictedServerDist = snap.dist + snap.speed * timeSince;
                 const isLocal = (p.id === myId);
+                const syncedSpeed = syncedActive
+                    ? (syncedFx.type === 'stone'
+                        ? 0
+                        : (((config && Number(config.baseSpeed)) || 300) * 0.1))
+                    : null;
 
                 if (isLocal) {
                     const overrideActive = !!(localImmediateEffect && Date.now() < localImmediateEffect.until);
-                    const overrideSpeed = overrideActive
+                    const localSpeed = overrideActive
                         ? ((localImmediateEffect.type === 'stone') ? 0 : (((config && Number(config.baseSpeed)) || 300) * 0.1))
-                        : snap.speed;
+                        : null;
+                    const overrideSpeed = (localSpeed !== null) ? localSpeed : ((syncedSpeed !== null) ? syncedSpeed : snap.speed);
+                    const predictedRefDist = snap.dist + overrideSpeed * timeSince;
                     localDistance += overrideSpeed * dt;
-                    const diff = predictedServerDist - localDistance;
+                    const diff = predictedRefDist - localDistance;
 
                     if (gameState.state !== 'RACING') {
                         localDistance = snap.dist;
                     } else if (Math.abs(diff) > 300) {
-                        localDistance = predictedServerDist;
+                        localDistance = predictedRefDist;
                     } else {
-                        localDistance += diff * (overrideActive ? 0.01 : 0.05);
+                        localDistance += diff * ((localSpeed !== null || syncedSpeed !== null) ? 0.02 : 0.05);
                     }
                     current = localDistance;
                 } else {
-                    const diff = predictedServerDist - current;
+                    const predictedDist = (syncedSpeed !== null) ? (snap.dist + syncedSpeed * timeSince) : predictedServerDist;
+                    const diff = predictedDist - current;
                     if (gameState.state !== 'RACING') {
                         current = snap.dist;
                     } else if (Math.abs(diff) > 300) {
-                        current = predictedServerDist;
+                        current = predictedDist;
                     } else {
                         current += diff * 0.15;
                     }
@@ -1177,10 +1210,15 @@ const PhaserGame = (() => {
                 }
 
                 // Status effects (visual only)
+                const syncedFx = syncedObstacleEffects.get(p.id);
+                const syncedFxActive = !!(syncedFx && Date.now() < syncedFx.until);
                 const localOverrideActive = (p.id === myId) && localImmediateEffect && (Date.now() < localImmediateEffect.until);
+                const syncedStatus = syncedFxActive
+                    ? ((syncedFx.type === 'oil') ? 'spinning' : 'stopped')
+                    : null;
                 const displayStatus = localOverrideActive
                     ? ((localImmediateEffect.type === 'oil') ? 'spinning' : 'stopped')
-                    : p.status;
+                    : (syncedStatus || p.status);
                 if (displayStatus === 'spinning' || (p.status === 'penalized' && p.effectType === 'spin')) {
                     car.container.setRotation((s.time.now / 1000) * 6);
                     car.container.setAlpha(0.85);
@@ -1509,71 +1547,39 @@ const PhaserGame = (() => {
         }
 
         function update(mySmoothDist, myLane, laneCount) {
-            if (!seed || !config) return;
+            if (!racePlan || !Array.isArray(racePlan.obstacles) || !config) return;
             const height = s.scale.height;
-            const renderStart = mySmoothDist - 500;
+            const renderStart = mySmoothDist - 700;
             const renderEnd = mySmoothDist + 2000;
 
             const visibleIds = new Set();
+            const inactiveQuestionIds = new Set(
+                (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
+            );
+            for (const obs of racePlan.obstacles) {
+                if (obs.distance < renderStart || obs.distance > renderEnd) continue;
+                if (obs.type === 'question' && inactiveQuestionIds.has(obs.id)) continue;
+                const rel = obs.distance - mySmoothDist;
+                const y = height * 0.75 - rel;
+                if (y < -120 || y > height + 120) continue;
+                const id = obs.id;
+                visibleIds.add(id);
 
-            // Deterministic obstacles
-            const initialDelayDist = (config.baseSpeed || 300) * (config.initialObstacleDelay || 3);
-            const step = 300;
-            const startRow = Math.max(0, Math.floor(renderStart / step) * step);
-            for (let d = startRow; d < renderEnd; d += step) {
-                if (d < initialDelayDist + 600) continue;
-                const lanes = deterministicObstacleLanes(d, laneCount);
-                for (const lane of lanes) {
-                    const obsId = `obs_${Math.floor(d)}_${lane}`;
-
-                    const rel = d - mySmoothDist;
-                    const y = height * 0.75 - rel;
-                    if (y < -120 || y > height + 120) continue;
-
-                    const type = deterministicObstacleType(d, lane);
-                    const id = obsId;
-                    visibleIds.add(id);
-
-                    let entry = activeById.get(id);
-                    if (!entry) {
-                        const spr = acquire(type);
-                        entry = { type, sprite: spr, distance: d, lane };
-                        activeById.set(id, entry);
-                    }
-                    entry.distance = d;
-                    entry.lane = lane;
-                    entry.sprite.setPosition(laneX(lane, laneCount), y);
-                    if (type === 'oil') {
-                        entry.sprite.setScale(1 + Math.sin((s.time.now / 1000) * 3) * 0.04);
-                    } else {
-                        entry.sprite.setScale(1);
-                    }
+                let entry = activeById.get(id);
+                if (!entry) {
+                    const spr = acquire(obs.type);
+                    entry = { type: obs.type, sprite: spr, distance: obs.distance, lane: obs.lane };
+                    activeById.set(id, entry);
                 }
-            }
-
-            // Pre-planned question boxes from server race plan
-            if (racePlan && Array.isArray(racePlan.questionPlan)) {
-                const inactiveQuestionIds = new Set(
-                    (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
-                );
-                for (const obs of racePlan.questionPlan) {
-                    if (inactiveQuestionIds.has(obs.id)) continue;
-                    const rel = obs.distance - mySmoothDist;
-                    const y = height * 0.75 - rel;
-                    if (y < -120 || y > height + 120) continue;
-                    const id = obs.id;
-                    visibleIds.add(id);
-
-                    let entry = activeById.get(id);
-                    if (!entry) {
-                        const spr = acquire('question');
-                        entry = { type: 'question', sprite: spr, distance: obs.distance, lane: obs.lane };
-                        activeById.set(id, entry);
-                    }
-                    entry.distance = obs.distance;
-                    entry.lane = obs.lane;
-                    entry.sprite.setPosition(laneX(obs.lane, laneCount), y);
+                entry.distance = obs.distance;
+                entry.lane = obs.lane;
+                entry.sprite.setPosition(laneX(obs.lane, laneCount), y);
+                if (obs.type === 'oil') {
+                    entry.sprite.setScale(1 + Math.sin((s.time.now / 1000) * 3) * 0.04);
+                } else if (obs.type === 'question') {
                     entry.sprite.setScale(1 + Math.sin((s.time.now / 1000) * 4) * 0.06);
+                } else {
+                    entry.sprite.setScale(1);
                 }
             }
 
@@ -1586,7 +1592,7 @@ const PhaserGame = (() => {
         }
 
         function checkCollisions(mySmoothDist, myLane, laneCount) {
-            if (!seed || !config || !gameState || !onHitCallback) return;
+            if (!racePlan || !Array.isArray(racePlan.obstacles) || !config || !gameState || !onHitCallback) return;
             if (!Number.isFinite(mySmoothDist)) return;
             if (lastCollisionDist === null) {
                 lastCollisionDist = mySmoothDist;
@@ -1598,32 +1604,14 @@ const PhaserGame = (() => {
             const maxDist = Math.max(fromDist, toDist) + 12;
             lastCollisionDist = mySmoothDist;
 
-            const initialDelayDist = (config.baseSpeed || 300) * (config.initialObstacleDelay || 3);
-            const step = 300;
-            const checkStart = Math.floor(minDist / step) * step;
-            const checkEnd = checkStart + 600;
-
-            for (let d = checkStart; d < checkEnd; d += step) {
-                if (d < initialDelayDist + 600) continue;
-                const lanes = deterministicObstacleLanes(d, laneCount);
-                if (!lanes.includes(myLane)) continue;
-                if (d >= minDist && d <= maxDist) {
-                    const obsId = `obs_${Math.floor(d)}_${myLane}`;
-                    const type = deterministicObstacleType(d, myLane);
-                    onHitCallback({ type, lane: myLane, distance: d, id: obsId });
-                }
-            }
-
-            if (racePlan && Array.isArray(racePlan.questionPlan)) {
-                const inactiveQuestionIds = new Set(
-                    (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
-                );
-                for (const obs of racePlan.questionPlan) {
-                    if (inactiveQuestionIds.has(obs.id)) continue;
-                    if (obs.lane !== myLane) continue;
-                    if (obs.distance >= minDist && obs.distance <= maxDist) {
-                        onHitCallback({ type: 'question', id: obs.id, lane: obs.lane, distance: obs.distance });
-                    }
+            const inactiveQuestionIds = new Set(
+                (gameState && Array.isArray(gameState.inactiveQuestionIds)) ? gameState.inactiveQuestionIds : []
+            );
+            for (const obs of racePlan.obstacles) {
+                if (obs.lane !== myLane) continue;
+                if (obs.type === 'question' && inactiveQuestionIds.has(obs.id)) continue;
+                if (obs.distance >= minDist && obs.distance <= maxDist) {
+                    onHitCallback({ type: obs.type, id: obs.id, lane: obs.lane, distance: obs.distance });
                 }
             }
         }
@@ -1992,6 +1980,8 @@ const PhaserGame = (() => {
         getGameState,
         setOnHit,
         applyLocalObstacleHit,
+        applySyncedObstacleEffect,
+        clearPredictionLane,
         triggerShake,
         addNotification
     };

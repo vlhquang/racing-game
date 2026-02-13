@@ -19,7 +19,7 @@
     let config = {};
     let lastInputTime = 0;
     let localHitObstacles = new Set(); // To prevent multiple hits on same box
-    let predictedLane = null;
+    let obstacleInputLockUntil = 0;
 
     // Network event: countdown
     Network.on('onCountdown', (data) => {
@@ -50,6 +50,7 @@
 
     function handleInput(direction) {
         if (!gameStarted) return;
+        if (Date.now() < obstacleInputLockUntil) return;
 
         // Block input if game is not racing
         const state = PhaserGame.getGameState();
@@ -80,16 +81,24 @@
         // Instant feedback
         if (obstacle.type === 'stone') {
             PhaserGame.applyLocalObstacleHit('stone');
+            PhaserGame.clearPredictionLane();
+            obstacleInputLockUntil = Date.now() + Math.max(200, ((config && config.stoneStopTime) || 1) * 1000);
             PhaserGame.triggerShake(8, 0.5);
             PhaserGame.addNotification('💥 ĐÁ!', '#ff6644', 1.5);
-            // We can even locally set status if we want extreme snappiness
+            setTimeout(() => {
+                Network.sendObstacleHit(UI.getRoomCode(), obstacle);
+            }, 0);
         } else if (obstacle.type === 'oil') {
             PhaserGame.applyLocalObstacleHit('oil');
+            PhaserGame.clearPredictionLane();
+            obstacleInputLockUntil = Date.now() + Math.max(200, ((config && config.oilSpinTime) || 1.5) * 1000);
             PhaserGame.addNotification('🛢️ DẦU LOANG!', '#9b59b6', 1.5);
+            setTimeout(() => {
+                Network.sendObstacleHit(UI.getRoomCode(), obstacle);
+            }, 0);
+        } else if (obstacle.type === 'question') {
+            Network.sendObstacleHit(UI.getRoomCode(), obstacle);
         }
-
-        // Report to server
-        Network.sendObstacleHit(UI.getRoomCode(), obstacle);
 
         // Tell renderer to wait a bit before snapping back to server distance
         // because we just hit something and speed will drop
@@ -108,6 +117,7 @@
 
     // Network event: obstacle hit (for effects)
     Network.on('onObstacleHit', (data) => {
+        PhaserGame.applySyncedObstacleEffect(data.playerId, data.type, data.duration);
         if (data.playerId === UI.getPlayerId()) {
             if (data.type === 'stone') {
                 PhaserGame.triggerShake(6, 0.4);

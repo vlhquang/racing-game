@@ -24,7 +24,9 @@ class GameRoom {
 
         // Track questions
         this.questionsUsed = 0;
+        this.fixedObstacles = [];
         this.questionPlan = [];
+        this.obstacleLookup = new Map();
         this.questionManager = new QuestionManager();
         this.lastBroadcastTime = 0;
     }
@@ -132,6 +134,9 @@ class GameRoom {
             i++;
         }
 
+        this.io.to(this.roomCode).emit('race-loading', { message: 'Đang tải vòng đua...' });
+        this.prepareRacePlan();
+
         let count = 3;
         this.io.to(this.roomCode).emit('countdown', { count, laneCount, config: this.config, seed: this.seed });
         const countdownInterval = setInterval(() => {
@@ -154,16 +159,11 @@ class GameRoom {
         this.lastTick = Date.now();
 
         this.questionsUsed = 0;
-        this.questionPlan = this.buildQuestionPlan();
         this.io.to(this.roomCode).emit('race-plan', {
             seed: this.seed,
             laneCount: this.getLaneCount(),
             config: this.config,
-            questionPlan: this.questionPlan.map((q) => ({
-                id: q.id,
-                lane: q.lane,
-                distance: q.distance
-            })),
+            obstacles: this.getRacePlanObstacles(),
             serverTime: Date.now()
         });
 
@@ -238,6 +238,57 @@ class GameRoom {
         }
 
         return lanes.slice(0, numObstacles);
+    }
+
+    getDeterministicObstacleType(distance, lane) {
+        const typeRand = this.getSeedRandom(distance + lane + 555);
+        return (typeRand < 0.6) ? 'stone' : 'oil';
+    }
+
+    prepareRacePlan() {
+        this.fixedObstacles = this.buildFixedObstaclePlan();
+        this.questionPlan = this.buildQuestionPlan();
+        this.obstacleLookup.clear();
+        for (const obs of this.fixedObstacles) {
+            this.obstacleLookup.set(obs.id, obs);
+        }
+        for (const q of this.questionPlan) {
+            this.obstacleLookup.set(q.id, q);
+        }
+    }
+
+    buildFixedObstaclePlan() {
+        const laneCount = this.getLaneCount();
+        const baseSpeed = Number(this.config.baseSpeed) || 300;
+        const raceDuration = Number(this.config.raceDuration) || 120;
+        const raceDistanceCap = baseSpeed * raceDuration * 1.2;
+        const initialDelayDist = baseSpeed * (this.config.initialObstacleDelay || 3);
+        const step = 300;
+        const plan = [];
+
+        const startRow = Math.max(0, Math.floor((initialDelayDist + 600) / step) * step);
+        for (let d = startRow; d <= raceDistanceCap; d += step) {
+            const lanes = this.getDeterministicObstacleLanes(d, laneCount);
+            for (const lane of lanes) {
+                plan.push({
+                    id: `obs_${Math.floor(d)}_${lane}`,
+                    type: this.getDeterministicObstacleType(d, lane),
+                    lane,
+                    distance: Math.floor(d)
+                });
+            }
+        }
+        return plan;
+    }
+
+    getRacePlanObstacles() {
+        const questionObstacles = this.questionPlan.map((q) => ({
+            id: q.id,
+            type: 'question',
+            lane: q.lane,
+            distance: q.distance
+        }));
+        return [...this.fixedObstacles, ...questionObstacles];
     }
 
     pickQuestionLaneAtDistance(distance, laneCount) {
@@ -321,26 +372,9 @@ class GameRoom {
             return;
         }
 
-        // 2. Handle Deterministic Obstacles (Stone/Oil) - Verify on Server
-        const d = obstacleData.distance;
-        const lane = obstacleData.lane;
-
-        // VERIFY: Did this obstacle actually exist?
-        const laneCount = this.getLaneCount();
-        const numRand = this.getSeedRandom(d + 789);
-        const numObstacles = Math.floor(numRand * (laneCount - 1)) + 1;
-
-        const lanes = [];
-        for (let i = 0; i < laneCount; i++) lanes.push(i);
-        for (let i = lanes.length - 1; i > 0; i--) {
-            const jRand = this.getSeedRandom(d + i + 999);
-            const j = Math.floor(jRand * (i + 1));
-            [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
-        }
-
-        const selectedLanes = lanes.slice(0, numObstacles);
-        if (!selectedLanes.includes(lane)) {
-            console.log(`[GameRoom] REJECTED hit: No obstacle at ${d}, lane ${lane}`);
+        // 2. Stone/Oil from pre-built race plan.
+        const obs = this.obstacleLookup.get(obstacleData.id);
+        if (!obs || obs.type !== obstacleData.type || obs.lane !== obstacleData.lane) {
             return;
         }
 
