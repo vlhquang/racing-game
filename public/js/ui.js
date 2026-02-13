@@ -96,6 +96,7 @@ const UI = (() => {
         const btnStart = document.getElementById('btn-start');
         const btnPlayAgain = document.getElementById('btn-play-again');
         const btnConfig = document.getElementById('btn-config');
+        const btnRoomConfig = document.getElementById('btn-room-config');
         const configOverlay = document.getElementById('config-overlay');
         const configForm = document.getElementById('config-form');
         const btnConfigClose = document.getElementById('btn-config-close');
@@ -136,7 +137,10 @@ const UI = (() => {
 
         function applyHostUiVisibility() {
             const isVisible = !!isHost;
-            if (btnConfig) btnConfig.classList.toggle('hidden', !isVisible);
+            const inRoom = !!currentRoomCode;
+            const showLobbyConfig = !inRoom || isVisible;
+            if (btnConfig) btnConfig.classList.toggle('hidden', !showLobbyConfig);
+            if (btnRoomConfig) btnRoomConfig.classList.toggle('hidden', !isVisible);
             if (btnCopyLink) btnCopyLink.classList.toggle('hidden', !isVisible);
             if (btnResultsCopyLink) btnResultsCopyLink.classList.toggle('hidden', !isVisible);
             if (lobbyQr) lobbyQr.classList.toggle('hidden', !isVisible);
@@ -299,6 +303,11 @@ const UI = (() => {
         btnConfig.addEventListener('click', () => {
             openConfig();
         });
+        if (btnRoomConfig) {
+            btnRoomConfig.addEventListener('click', () => {
+                openConfig();
+            });
+        }
 
         btnConfigClose.addEventListener('click', () => {
             closeConfig();
